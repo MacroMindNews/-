@@ -1,544 +1,882 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOMBRE - Tienda de Ropa</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* --- ESTILOS GENERALES --- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-        }
+import React, { useMemo, useState } from "react";
+import {
+  Menu,
+  X,
+  ShoppingBag,
+  Plus,
+  Minus,
+  Trash2,
+  ArrowLeft,
+  SlidersHorizontal,
+  Shirt,
+  Instagram,
+  Facebook,
+  Music2,
+} from "lucide-react";
 
-        body {
-            background-color: #fcfcfc;
-            color: #1a1a1a;
-        }
+/* ---------------------------------------------------------
+   TOKENS
+--------------------------------------------------------- */
+const C = {
+  paper: "#EFF0E9",
+  card: "#F7F6F0",
+  ink: "#211F1A",
+  inkSoft: "#5C594F",
+  line: "#DAD7CC",
+  olive: "#4E5A38",
+  oliveDark: "#3B4429",
+  denim: "#4C6272",
+};
 
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
+const SWATCH = {
+  oliva: "#6B7048",
+  crema: "#E4DCC8",
+  denim: "#4C6272",
+  camel: "#B58A5D",
+  negro: "#2B2A26",
+  gris: "#A8A69C",
+  terracota: "#A85C3B",
+  blanco: "#EDE9DE",
+  burdeos: "#723A3D",
+  botella: "#2F4A3C",
+};
 
-        /* --- HEADER --- */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background-color: #c9d5df;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+const serif = "'Fraunces', Georgia, serif";
+const sans = "'Space Grotesk', 'Helvetica Neue', sans-serif";
 
-        .header-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #1a1a1a;
-        }
+const money = (n) =>
+  "$" + n.toLocaleString("es-AR", { maximumFractionDigits: 0 });
 
-        .brand-name {
-            font-family: 'Times New Roman', serif;
-            font-size: 1.8rem;
-            letter-spacing: 2px;
-            font-weight: bold;
-        }
+/* ---------------------------------------------------------
+   DATA
+--------------------------------------------------------- */
+const CATEGORIES = [
+  "Camperas",
+  "Sweaters",
+  "Camisas",
+  "Pantalones",
+  "Vestidos",
+  "Faldas",
+  "Blazers",
+  "Remeras",
+  "Shorts",
+  "Buzos",
+  "Chalecos",
+];
 
-        /* --- BANNERS MUJER / HOMBRE --- */
-        .banner-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 15px;
-        }
+const GENDERS = ["Mujer", "Hombre", "Unisex", "Niños", "Jóvenes"];
 
-        .banner-card {
-            position: relative;
-            height: 220px;
-            overflow: hidden;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+const PRODUCTS = [
+  { id: 1, name: "Campera de corderoy oliva", price: 42000, gender: "Mujer", category: "Camperas", tone: "oliva" },
+  { id: 2, name: "Sweater trenzado crema", price: 28500, gender: "Mujer", category: "Sweaters", tone: "crema" },
+  { id: 3, name: "Vestido midi floreado", price: 35000, gender: "Mujer", category: "Vestidos", tone: "camel" },
+  { id: 4, name: "Blazer de lana gris", price: 47000, gender: "Mujer", category: "Blazers", tone: "gris" },
+  { id: 5, name: "Pollera cargo negra", price: 26000, gender: "Mujer", category: "Faldas", tone: "negro" },
+  { id: 6, name: "Camisa oxford a rayas", price: 24000, gender: "Mujer", category: "Camisas", tone: "blanco" },
+  { id: 7, name: "Buzo oversize crudo", price: 22000, gender: "Mujer", category: "Buzos", tone: "crema" },
+  { id: 8, name: "Chaleco de punto burdeos", price: 19500, gender: "Mujer", category: "Chalecos", tone: "burdeos" },
+  { id: 9, name: "Pantalón palazzo camel", price: 31000, gender: "Mujer", category: "Pantalones", tone: "camel" },
+  { id: 10, name: "Remera básica canesú", price: 14000, gender: "Mujer", category: "Remeras", tone: "blanco" },
+  { id: 11, name: "Campera de jean clásica", price: 39000, gender: "Hombre", category: "Camperas", tone: "denim" },
+  { id: 12, name: "Sweater cuello alto verde", price: 27000, gender: "Hombre", category: "Sweaters", tone: "botella" },
+  { id: 13, name: "Camisa a cuadros flanela", price: 25500, gender: "Hombre", category: "Camisas", tone: "terracota" },
+  { id: 14, name: "Pantalón cargo oliva", price: 32000, gender: "Hombre", category: "Pantalones", tone: "oliva" },
+  { id: 15, name: "Blazer de pana camel", price: 45000, gender: "Hombre", category: "Blazers", tone: "camel" },
+  { id: 16, name: "Short de jean claro", price: 21000, gender: "Hombre", category: "Shorts", tone: "denim" },
+  { id: 17, name: "Buzo con capucha gris", price: 23500, gender: "Hombre", category: "Buzos", tone: "gris" },
+  { id: 18, name: "Remera estampada vintage", price: 16000, gender: "Hombre", category: "Remeras", tone: "negro" },
+  { id: 19, name: "Chaleco acolchado negro", price: 29000, gender: "Hombre", category: "Chalecos", tone: "negro" },
+  { id: 20, name: "Camisa denim western", price: 27500, gender: "Hombre", category: "Camisas", tone: "denim" },
+  { id: 21, name: "Campera bomber", price: 38000, gender: "Unisex", category: "Camperas", tone: "negro" },
+  { id: 22, name: "Buzo crewneck básico", price: 24500, gender: "Unisex", category: "Buzos", tone: "crema" },
+  { id: 23, name: "Pantalón cargo oliva ancho", price: 30500, gender: "Unisex", category: "Pantalones", tone: "oliva" },
+  { id: 24, name: "Remera oversize lisa", price: 15500, gender: "Unisex", category: "Remeras", tone: "blanco" },
+  { id: 25, name: "Sweater a rayas marinero", price: 26500, gender: "Unisex", category: "Sweaters", tone: "denim" },
+  { id: 26, name: "Campera rompeviento", price: 18000, gender: "Niños", category: "Camperas", tone: "denim" },
+  { id: 27, name: "Remera estampada dino", price: 9500, gender: "Niños", category: "Remeras", tone: "camel" },
+  { id: 28, name: "Buzo canguro básico", price: 19500, gender: "Jóvenes", category: "Buzos", tone: "oliva" },
+  { id: 29, name: "Pantalón jogger gris", price: 21500, gender: "Jóvenes", category: "Pantalones", tone: "gris" },
+  { id: 30, name: "Campera parka verde", price: 34000, gender: "Jóvenes", category: "Camperas", tone: "botella" },
+];
 
-        .banner-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
+// Las 18 prendas más nuevas (orden de carga), sin importar género
+const FEATURED = PRODUCTS.slice(0, 18);
 
-        .banner-card:hover img {
-            transform: scale(1.03);
-        }
-
-        .banner-title {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Times New Roman', serif;
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: #1a1a1a;
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 6px 24px;
-            border-radius: 2px;
-        }
-
-        /* --- SECCIÓN DESTACADOS --- */
-        .section-title {
-            text-align: center;
-            font-family: 'Times New Roman', serif;
-            font-size: 2rem;
-            margin: 30px 0 20px;
-        }
-
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            padding: 0 15px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .product-card {
-            display: flex;
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .product-image {
-            width: 100%;
-            aspect-ratio: 3/4;
-            background-color: #e5e5e5;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .product-name {
-            font-size: 0.9rem;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .product-price {
-            font-size: 0.85rem;
-            color: #555;
-        }
-
-        /* --- BOTÓN VER MÁS --- */
-        .btn-container {
-            display: flex;
-            justify-content: center;
-            margin: 35px 0 45px;
-        }
-
-        .btn-ver-mas {
-            background-color: #c9d5df;
-            color: #111;
-            padding: 12px 36px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 0.95rem;
-            letter-spacing: 1px;
-            transition: background-color 0.2s ease;
-        }
-
-        .btn-ver-mas:hover {
-            background-color: #b3c2ce;
-        }
-
-        /* --- MENÚ LATERAL (DRAWER) --- */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -320px;
-            width: 300px;
-            height: 100%;
-            background-color: #ffffff;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            z-index: 200;
-            transition: left 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .close-sidebar-btn {
-            align-self: flex-end;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-
-        .sidebar-section {
-            margin-bottom: 25px;
-        }
-
-        .sidebar-section h3 {
-            font-size: 1rem;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 6px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .sidebar-section ul {
-            list-style: none;
-        }
-
-        .sidebar-section ul li {
-            margin-bottom: 8px;
-        }
-
-        .sidebar-section ul li a {
-            font-size: 0.9rem;
-            color: #444;
-            transition: color 0.2s;
-        }
-
-        .sidebar-section ul li a:hover {
-            color: #000;
-            font-weight: bold;
-        }
-
-        /* --- MODAL CARRITO --- */
-        .cart-dropdown {
-            display: none;
-            position: fixed;
-            top: 65px;
-            right: 15px;
-            width: 320px;
-            background-color: #ffffff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            border: 1px solid #eee;
-            border-radius: 6px;
-            z-index: 150;
-            padding: 15px;
-        }
-
-        .cart-dropdown.active {
-            display: block;
-        }
-
-        .cart-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .cart-item img {
-            width: 45px;
-            height: 55px;
-            object-fit: cover;
-            border-radius: 3px;
-        }
-
-        .cart-item-info {
-            flex-grow: 1;
-            font-size: 0.85rem;
-        }
-
-        .cart-item-name {
-            font-weight: bold;
-        }
-
-        .cart-item-price {
-            color: #666;
-        }
-
-        .cart-total {
-            font-size: 0.95rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            margin: 15px 0 10px;
-        }
-
-        .btn-checkout {
-            display: block;
-            width: 100%;
-            background-color: #c9d5df;
-            text-align: center;
-            padding: 10px 0;
-            color: #111;
-            font-weight: bold;
-            font-size: 0.85rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-checkout:hover {
-            background-color: #b3c2ce;
-        }
-
-        /* --- FOOTER --- */
-        footer {
-            background-color: #c9d5df;
-            padding: 30px 20px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        .footer-left .brand-name {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-        }
-
-        .social-icons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .social-box {
-            width: 25px;
-            height: 25px;
-            background-color: #000;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            text-decoration: none;
-        }
-
-        .footer-right ul {
-            list-style: none;
-        }
-
-        .footer-right ul li {
-            margin-bottom: 6px;
-        }
-
-        .footer-right ul li a {
-            font-size: 0.8rem;
-            color: #333;
-        }
-
-        /* Overlay para Menú */
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.4);
-            z-index: 180;
-        }
-
-        .overlay.active {
-            display: block;
-        }
-
-        /* Adaptabilidad en pantallas chicas */
-        @media (max-width: 600px) {
-            .product-grid {
-                grid-template-columns: repeat(2, 1fr); /* 2 columnas en móviles para mejor visual */
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="overlay" id="overlay" onclick="closeAllDrawers()"></div>
-
-    <nav class="sidebar" id="sidebar">
-        <button class="close-sidebar-btn" onclick="toggleSidebar()">&times;</button>
-        
-        <div class="sidebar-section">
-            <h3>Prendas</h3>
-            <ul>
-                <li><a href="catalogo.html?cat=camisas">Camisas</a></li>
-                <li><a href="catalogo.html?cat=pantalones">Pantalones</a></li>
-                <li><a href="catalogo.html?cat=abrigos">Abrigos y Sweaters</a></li>
-                <li><a href="catalogo.html?cat=vestidos">Vestidos</a></li>
-                <li><a href="catalogo.html?cat=remeras">Remeras y Tops</a></li>
-            </ul>
+/* ---------------------------------------------------------
+   PRODUCT CARD
+--------------------------------------------------------- */
+function ProductCard({ p, onAdd }) {
+  return (
+    <div className="group flex flex-col">
+      <div
+        className="relative w-full overflow-hidden rounded-md"
+        style={{ aspectRatio: "3 / 4", backgroundColor: SWATCH[p.tone] }}
+      >
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Shirt
+            size={44}
+            strokeWidth={1.1}
+            color={p.tone === "crema" || p.tone === "blanco" || p.tone === "gris" ? C.ink : "#F4F2EA"}
+            style={{ opacity: 0.55 }}
+          />
         </div>
 
-        <div class="sidebar-section">
-            <h3>Género</h3>
-            <ul>
-                <li><a href="catalogo.html?gen=mujer">Mujer</a></li>
-                <li><a href="catalogo.html?gen=hombre">Hombre</a></li>
-                <li><a href="catalogo.html?gen=unisex">Unisex</a></li>
-                <li><a href="catalogo.html?gen=ninos">Niños</a></li>
-                <li><a href="catalogo.html?gen=jovenes">Jóvenes</a></li>
-            </ul>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>Legal</h3>
-            <ul>
-                <li><a href="politicas-privacidad.html">Políticas de Privacidad</a></li>
-                <li><a href="terminos-servicio.html">Términos del Servicio</a></li>
-                <li><a href="politicas-devolucion.html">Políticas de Devolución</a></li>
-                <li><a href="contacto.html">Contacto</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <header>
-        <button class="header-btn" onclick="toggleSidebar()">
-            <i class="fa-solid fa-bars"></i>
+        {/* Overlay con hover — solo en dispositivos con mouse (computadora) */}
+        <button
+          onClick={() => onAdd(p.id)}
+          aria-label={`Agregar ${p.name} al carrito`}
+          className="hover-add absolute inset-0 hidden sm:flex items-center justify-center"
+          style={{ backgroundColor: "rgba(33,31,26,0.45)", opacity: 0 }}
+        >
+          <span
+            className="px-4 py-2 rounded-full text-sm"
+            style={{ fontFamily: sans, backgroundColor: C.paper, color: C.ink, fontWeight: 600 }}
+          >
+            Agregar al carrito
+          </span>
         </button>
-        <div class="brand-name">NOMBRE</div>
-        <button class="header-btn" onclick="toggleCart()">
-            <i class="fa-solid fa-cart-shopping"></i>
+      </div>
+      <div className="pt-2">
+        <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-medium leading-snug">
+          {p.name}
+        </p>
+        <p style={{ fontFamily: sans, color: C.oliveDark }} className="text-sm font-bold mt-0.5">
+          {money(p.price)}
+        </p>
+        {/* Botón siempre visible — celular / pantallas táctiles */}
+        <button
+          onClick={() => onAdd(p.id)}
+          className="sm:hidden mt-2 w-full py-2 rounded-full text-center"
+          style={{ fontFamily: sans, backgroundColor: C.olive, color: C.paper, fontSize: 12, fontWeight: 600 }}
+        >
+          Agregar al carrito
         </button>
-    </header>
-
-    <div class="cart-dropdown" id="cartDropdown">
-        <div class="cart-item">
-            <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=100" alt="Prenda">
-            <div class="cart-item-info">
-                <div class="cart-item-name">Jersey de Lana Merino</div>
-                <div class="cart-item-price">$85.00 x 1</div>
-            </div>
-        </div>
-        <div class="cart-item">
-            <img src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=100" alt="Prenda">
-            <div class="cart-item-info">
-                <div class="cart-item-name">Pantalón Cargo Lino</div>
-                <div class="cart-item-price">$75.00 x 1</div>
-            </div>
-        </div>
-        <div class="cart-total">
-            <span>Subtotal:</span>
-            <span>$160.00</span>
-        </div>
-        <a href="checkout.html" class="btn-checkout">FINALIZAR COMPRA</a>
+      </div>
     </div>
+  );
+}
 
-    <section class="banner-container">
-        <a href="catalogo.html?gen=mujer" class="banner-card">
-            <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800" alt="Ropa Mujer">
-            <span class="banner-title">Mujer</span>
-        </a>
-        <a href="catalogo.html?gen=hombre" class="banner-card">
-            <img src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=800" alt="Ropa Hombre">
-            <span class="banner-title">Hombre</span>
-        </a>
-    </section>
+/* ---------------------------------------------------------
+   HERO BLOCK (Mujer / Hombre)
+--------------------------------------------------------- */
+function Hero({ label, sub, color, onClick, flip }) {
+  return (
+    <button
+      onClick={onClick}
+      className="relative w-full text-left overflow-hidden"
+      style={{ height: 220, backgroundColor: color }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(115deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 2px, transparent 2px, transparent 26px)",
+        }}
+      />
+      <div
+        className={`absolute inset-0 flex flex-col justify-end p-5 ${flip ? "items-end text-right" : ""}`}
+      >
+        <span style={{ fontFamily: sans, color: "rgba(244,242,234,0.75)" }} className="text-xs mb-1">
+          {sub}
+        </span>
+        <span
+          style={{ fontFamily: serif, color: "#F4F2EA", fontStyle: "italic" }}
+          className="text-4xl leading-none"
+        >
+          {label}
+        </span>
+        <span
+          style={{ fontFamily: sans, color: "#F4F2EA" }}
+          className="text-xs mt-2 underline underline-offset-4"
+        >
+          Ver colección
+        </span>
+      </div>
+    </button>
+  );
+}
 
-    <main>
-        <h2 class="section-title">Destacado</h2>
-        <div class="product-grid" id="destacadosContainer">
+/* ---------------------------------------------------------
+   HEADER
+--------------------------------------------------------- */
+function Header({ onMenu, onCart, cartCount, view, onBack, title }) {
+  return (
+    <div className="sticky top-0 z-20" style={{ backgroundColor: C.paper }}>
+      <div
+        className="flex items-center justify-between px-4 border-b"
+        style={{ height: 56, borderColor: C.line }}
+      >
+        <button onClick={onMenu} aria-label="Abrir menú">
+          <Menu size={22} color={C.ink} />
+        </button>
+        <span style={{ fontFamily: serif, color: C.ink }} className="text-xl tracking-tight">
+          CRUDO
+        </span>
+        <button onClick={onCart} aria-label="Abrir carrito" className="relative">
+          <ShoppingBag size={21} color={C.ink} />
+          {cartCount > 0 && (
+            <span
+              className="absolute -top-2 -right-2 flex items-center justify-center rounded-full text-xs"
+              style={{
+                width: 17,
+                height: 17,
+                backgroundColor: C.olive,
+                color: C.paper,
+                fontFamily: sans,
+                fontSize: 10,
+              }}
+            >
+              {cartCount}
+            </span>
+          )}
+        </button>
+      </div>
+      {view !== "home" && (
+        <div className="flex items-center gap-2 px-4" style={{ height: 44 }}>
+          <button onClick={onBack} aria-label="Volver" className="flex items-center gap-1">
+            <ArrowLeft size={16} color={C.inkSoft} />
+          </button>
+          <span style={{ fontFamily: sans, color: C.ink }} className="text-sm font-medium">
+            {title}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   MENU DRAWER
+--------------------------------------------------------- */
+function MenuDrawer({ open, onClose, onPickGender, onPickCategory }) {
+  return (
+    <div
+      className="fixed inset-0 z-40 transition"
+      style={{ pointerEvents: open ? "auto" : "none" }}
+    >
+      <div
+        onClick={onClose}
+        className="absolute inset-0 transition"
+        style={{
+          backgroundColor: "rgba(33,31,26,0.45)",
+          opacity: open ? 1 : 0,
+        }}
+      />
+      <div
+        className="absolute left-0 top-0 h-full overflow-y-auto transition-transform duration-300 ease-out"
+        style={{
+          width: "86%",
+          maxWidth: 340,
+          backgroundColor: "#FFFFFF",
+          transform: open ? "translateX(0)" : "translateX(-100%)",
+        }}
+      >
+        <div className="flex justify-end px-6 pt-6">
+          <button onClick={onClose} aria-label="Cerrar menú">
+            <X size={20} color={C.ink} />
+          </button>
+        </div>
+
+        <div className="px-6 pb-8 pt-2">
+          <p style={{ fontFamily: sans, color: C.ink }} className="text-lg font-bold mb-2">
+            Prendas
+          </p>
+          <div className="border-b mb-3" style={{ borderColor: C.line }} />
+          <div className="flex flex-col mb-8">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => onPickCategory(c)}
+                className="text-left py-2"
+                style={{ fontFamily: sans, color: C.ink, fontSize: 16 }}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontFamily: sans, color: C.ink }} className="text-lg font-bold mb-2">
+            Tipo
+          </p>
+          <div className="border-b mb-3" style={{ borderColor: C.line }} />
+          <div className="flex flex-col mb-8">
+            {GENDERS.map((g) => (
+              <button
+                key={g}
+                onClick={() => onPickGender(g)}
+                className="text-left py-2"
+                style={{ fontFamily: sans, color: C.ink, fontSize: 16 }}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontFamily: sans, color: C.ink }} className="text-lg font-bold mb-2">
+            Legal
+          </p>
+          <div className="border-b mb-3" style={{ borderColor: C.line }} />
+          <div className="flex flex-col">
+            {["Políticas de Privacidad", "Políticas de Cambio", "Políticas de Devolución", "Contacto"].map(
+              (l) => (
+                <span key={l} style={{ fontFamily: sans, color: C.ink }} className="text-left py-2 text-base">
+                  {l}
+                </span>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   CART DRAWER
+--------------------------------------------------------- */
+function CartDrawer({ open, onClose, items, onQty, onRemove, subtotal, onCheckout }) {
+  return (
+    <div className="fixed inset-0 z-40" style={{ pointerEvents: open ? "auto" : "none" }}>
+      <div
+        onClick={onClose}
+        className="absolute inset-0 transition"
+        style={{ backgroundColor: "rgba(33,31,26,0.45)", opacity: open ? 1 : 0 }}
+      />
+      <div
+        className="absolute right-0 top-0 h-full flex flex-col transition-transform duration-300 ease-out"
+        style={{
+          width: "88%",
+          maxWidth: 360,
+          backgroundColor: C.paper,
+          transform: open ? "translateX(0)" : "translateX(100%)",
+        }}
+      >
+        <div
+          className="flex items-center justify-between px-5 border-b"
+          style={{ height: 56, borderColor: C.line }}
+        >
+          <span style={{ fontFamily: serif, color: C.ink }} className="text-lg">
+            Tu carrito
+          </span>
+          <button onClick={onClose} aria-label="Cerrar carrito">
+            <X size={20} color={C.ink} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5">
+          {items.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center px-6">
+              <ShoppingBag size={28} color={C.inkSoft} />
+              <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm mt-3">
+                Todavía no agregaste nada. Elegí una prenda y tocá el "+" para sumarla.
+              </p>
             </div>
-
-        <div class="btn-container">
-            <a href="catalogo.html" class="btn-ver-mas">VER MÁS</a>
-        </div>
-    </main>
-
-    <footer>
-        <div class="footer-left">
-            <div class="brand-name">NOMBRE</div>
-            <p style="font-size: 0.8rem; margin-bottom: 8px;">Nuestras redes</p>
-            <div class="social-icons">
-                <a href="#" class="social-box"><i class="fa-brands fa-facebook-f"></i></a>
-                <a href="#" class="social-box"><i class="fa-brands fa-twitter"></i></a>
-                <a href="#" class="social-box"><i class="fa-brands fa-instagram"></i></a>
-                <a href="#" class="social-box"><i class="fa-brands fa-youtube"></i></a>
-            </div>
-        </div>
-        <div class="footer-right">
-            <ul>
-                <li><a href="politicas-privacidad.html">Políticas de Privacidad</a></li>
-                <li><a href="terminos-servicio.html">Políticas de Compra</a></li>
-                <li><a href="politicas-devolucion.html">Políticas de Devolución</a></li>
-                <li><a href="contacto.html">Contacto</a></li>
-            </ul>
-        </div>
-    </footer>
-
-    <script>
-        // Array de ejemplo para 18 productos (3 columnas x 6 filas)
-        const sampleProducts = [
-            { name: "Sweater Casual Lana", price: "$85.00", img: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400" },
-            { name: "Vestido Floral Verano", price: "$65.00", img: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400" },
-            { name: "Pantalón Cargo Beige", price: "$75.00", img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400" },
-            { name: "Remera Básica Blanca", price: "$25.00", img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400" },
-            { name: "Buzo Rayado Clásico", price: "$60.00", img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" },
-            { name: "Buzo Oversize Indigo", price: "$80.00", img: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=400" },
-            { name: "Sweater Verde Oliva", price: "$70.00", img: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400" },
-            { name: "Buzo Cuello Redondo", price: "$55.00", img: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400" },
-            { name: "Campera Pana Marrón", price: "$110.00", img: "https://images.unsplash.com/photo-1544441893-675973e31985?w=400" },
-            { name: "Remera Naranja Escote V", price: "$35.00", img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400" },
-            { name: "Vestido Negro Cruzado", price: "$90.00", img: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400" },
-            { name: "Pantalón Chino Arena", price: "$70.00", img: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400" },
-            { name: "Sweater Cuello Redondo", price: "$65.00", img: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400" },
-            { name: "Saco Tweed Gris", price: "$130.00", img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400" },
-            { name: "Remera Verde Militar", price: "$30.00", img: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=400" },
-            { name: "Campera Bomber Marino", price: "$105.00", img: "https://images.unsplash.com/photo-1548883354-7622d03aca27?w=400" },
-            { name: "Bermuda Cargo Urbana", price: "$45.00", img: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400" },
-            { name: "Pantalón Slim Negro", price: "$68.00", img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400" }
-        ];
-
-        // Cargar productos en la grilla
-        const grid = document.getElementById('destacadosContainer');
-        grid.innerHTML = sampleProducts.map(p => `
-            <article class="product-card">
-                <div class="product-image">
-                    <img src="${p.img}" alt="${p.name}">
+          ) : (
+            <div className="divide-y" style={{ borderColor: C.line }}>
+              {items.map(({ p, qty }) => (
+                <div key={p.id} className="flex gap-3 py-4">
+                  <div
+                    className="flex items-center justify-center rounded-md shrink-0"
+                    style={{ width: 56, height: 68, backgroundColor: SWATCH[p.tone] }}
+                  >
+                    <Shirt
+                      size={24}
+                      strokeWidth={1.2}
+                      color={p.tone === "crema" || p.tone === "blanco" || p.tone === "gris" ? C.ink : "#F4F2EA"}
+                      style={{ opacity: 0.6 }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-medium leading-snug">
+                      {p.name}
+                    </p>
+                    <p style={{ fontFamily: sans, color: C.oliveDark }} className="text-sm font-bold mt-0.5">
+                      {money(p.price)}
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <button
+                        onClick={() => onQty(p.id, -1)}
+                        className="flex items-center justify-center rounded-full border"
+                        style={{ width: 24, height: 24, borderColor: C.line }}
+                      >
+                        <Minus size={12} color={C.ink} />
+                      </button>
+                      <span style={{ fontFamily: sans, color: C.ink }} className="text-sm">
+                        {qty}
+                      </span>
+                      <button
+                        onClick={() => onQty(p.id, 1)}
+                        className="flex items-center justify-center rounded-full border"
+                        style={{ width: 24, height: 24, borderColor: C.line }}
+                      >
+                        <Plus size={12} color={C.ink} />
+                      </button>
+                      <button onClick={() => onRemove(p.id)} className="ml-auto" aria-label="Quitar">
+                        <Trash2 size={16} color={C.inkSoft} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <h4 class="product-name">${p.name}</h4>
-                <p class="product-price">${p.price}</p>
-            </article>
-        `).join('');
+              ))}
+            </div>
+          )}
+        </div>
 
-        // Manejo del menú lateral
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-            // Cierra el carrito si está abierto
-            document.getElementById('cartDropdown').classList.remove('active');
-        }
+        <div className="px-5 py-4 border-t" style={{ borderColor: C.line }}>
+          <div className="flex items-center justify-between mb-3">
+            <span style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
+              Subtotal
+            </span>
+            <span style={{ fontFamily: sans, color: C.ink }} className="text-base font-bold">
+              {money(subtotal)}
+            </span>
+          </div>
+          <button
+            onClick={onCheckout}
+            disabled={items.length === 0}
+            className="w-full py-3 rounded-full text-center"
+            style={{
+              fontFamily: sans,
+              backgroundColor: items.length === 0 ? C.line : C.olive,
+              color: items.length === 0 ? C.inkSoft : C.paper,
+              fontWeight: 600,
+            }}
+          >
+            Finalizar compra
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        // Manejo del carrito desplegable
-        function toggleCart() {
-            const cart = document.getElementById('cartDropdown');
-            cart.classList.toggle('active');
-        }
+/* ---------------------------------------------------------
+   HOME VIEW
+--------------------------------------------------------- */
+function Home({ onAdd, goCatalog }) {
+  return (
+    <div>
+      <Hero
+        label="Mujer"
+        sub="Nueva selección"
+        color={C.olive}
+        onClick={() => goCatalog({ gender: "Mujer" })}
+      />
+      <Hero
+        label="Hombre"
+        sub="Nueva selección"
+        color={C.denim}
+        onClick={() => goCatalog({ gender: "Hombre" })}
+        flip
+      />
 
-        // Cerrar todo al hacer click fuera
-        function closeAllDrawers() {
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('overlay').classList.remove('active');
-            document.getElementById('cartDropdown').classList.remove('active');
+      <div className="px-4 pt-8 pb-3">
+        <h2 style={{ fontFamily: serif, color: C.ink }} className="text-3xl">
+          Destacado
+        </h2>
+        <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm mt-1">
+          Lo último que llegó a la tienda.
+        </p>
+      </div>
+
+      <div className="px-4 grid grid-cols-3 gap-x-3 sm:gap-x-4 gap-y-6">
+        {FEATURED.map((p) => (
+          <ProductCard key={p.id} p={p} onAdd={onAdd} />
+        ))}
+      </div>
+
+      <div className="flex justify-center py-8">
+        <button
+          onClick={() => goCatalog({})}
+          className="px-8 py-3 rounded-full"
+          style={{ fontFamily: sans, backgroundColor: C.olive, color: C.paper, fontWeight: 600 }}
+        >
+          Ver más
+        </button>
+      </div>
+
+      <footer className="px-5 py-8" style={{ backgroundColor: C.card, borderTop: `1px solid ${C.line}` }}>
+        <p style={{ fontFamily: serif, color: C.ink }} className="text-2xl mb-4">
+          CRUDO
+        </p>
+        <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-xs mb-2">
+          Nuestras redes
+        </p>
+        <div className="flex gap-2 mb-6">
+          {[Instagram, Facebook, Music2].map((Icon, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-center rounded-md"
+              style={{ width: 34, height: 34, backgroundColor: C.ink }}
+            >
+              <Icon size={16} color={C.paper} />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {["Políticas de Privacidad", "Políticas de Cambio", "Políticas de Devolución", "Contacto"].map(
+            (l) => (
+              <span key={l} style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
+                {l}
+              </span>
+            )
+          )}
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   CATALOG VIEW
+--------------------------------------------------------- */
+function Catalog({ onAdd, filters, setFilters }) {
+  const [showFilters, setShowFilters] = useState(true);
+
+  const toggle = (key, value) => {
+    setFilters((f) => {
+      const set = new Set(f[key]);
+      set.has(value) ? set.delete(value) : set.add(value);
+      return { ...f, [key]: set };
+    });
+  };
+
+  const results = useMemo(() => {
+    return PRODUCTS.filter((p) => {
+      const gOk = filters.gender.size === 0 || filters.gender.has(p.gender);
+      const cOk = filters.category.size === 0 || filters.category.has(p.category);
+      return gOk && cOk;
+    });
+  }, [filters]);
+
+  const clear = () => setFilters({ gender: new Set(), category: new Set() });
+  const activeCount = filters.gender.size + filters.category.size;
+
+  return (
+    <div className="px-4 pt-4 pb-10">
+      <div className="flex items-center justify-between mb-4">
+        <span style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
+          {results.length} {results.length === 1 ? "prenda" : "prendas"}
+        </span>
+        <button
+          onClick={() => setShowFilters((s) => !s)}
+          className="flex items-center gap-1.5 text-sm"
+          style={{ fontFamily: sans, color: C.ink }}
+        >
+          <SlidersHorizontal size={15} />
+          Filtros{activeCount > 0 ? ` (${activeCount})` : ""}
+        </button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-6">
+        {showFilters && (
+          <aside
+            className="sm:w-48 shrink-0 pb-6 sm:pb-0 sm:border-r"
+            style={{ borderColor: C.line }}
+          >
+            <div className="sm:pr-5">
+              <div className="flex items-center justify-between mb-2">
+                <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-semibold">
+                  Género
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 mb-6">
+                {GENDERS.map((g) => (
+                  <label key={g} className="flex items-center gap-2 text-sm" style={{ fontFamily: sans, color: C.ink }}>
+                    <input
+                      type="checkbox"
+                      checked={filters.gender.has(g)}
+                      onChange={() => toggle("gender", g)}
+                    />
+                    {g}
+                  </label>
+                ))}
+              </div>
+
+              <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-semibold mb-2">
+                Prenda
+              </p>
+              <div className="flex flex-col gap-2 mb-6">
+                {CATEGORIES.map((c) => (
+                  <label key={c} className="flex items-center gap-2 text-sm" style={{ fontFamily: sans, color: C.ink }}>
+                    <input
+                      type="checkbox"
+                      checked={filters.category.has(c)}
+                      onChange={() => toggle("category", c)}
+                    />
+                    {c}
+                  </label>
+                ))}
+              </div>
+
+              {activeCount > 0 && (
+                <button
+                  onClick={clear}
+                  className="text-sm underline underline-offset-4"
+                  style={{ fontFamily: sans, color: C.inkSoft }}
+                >
+                  Limpiar filtros
+                </button>
+              )}
+            </div>
+          </aside>
+        )}
+
+        <div className="flex-1">
+          {results.length === 0 ? (
+            <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm py-10 text-center">
+              No encontramos prendas con esos filtros.
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-x-3 sm:gap-x-4 gap-y-6">
+              {results.map((p) => (
+                <ProductCard key={p.id} p={p} onAdd={onAdd} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   CHECKOUT VIEW
+--------------------------------------------------------- */
+function Checkout({ items, subtotal, onDone }) {
+  const [done, setDone] = useState(false);
+
+  if (done) {
+    return (
+      <div className="px-6 py-20 flex flex-col items-center text-center">
+        <div
+          className="flex items-center justify-center rounded-full mb-4"
+          style={{ width: 56, height: 56, backgroundColor: C.olive }}
+        >
+          <Shirt size={26} color={C.paper} />
+        </div>
+        <h2 style={{ fontFamily: serif, color: C.ink }} className="text-2xl mb-2">
+          Compra confirmada
+        </h2>
+        <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm mb-6">
+          Te enviamos un correo con el detalle del pedido.
+        </p>
+        <button
+          onClick={onDone}
+          className="px-6 py-2.5 rounded-full"
+          style={{ fontFamily: sans, backgroundColor: C.olive, color: C.paper, fontWeight: 600 }}
+        >
+          Volver a la tienda
+        </button>
+      </div>
+    );
+  }
+
+  const shipping = subtotal > 0 ? 0 : 0;
+  const total = subtotal + shipping;
+
+  return (
+    <div className="px-4 py-6">
+      <div className="flex flex-col sm:flex-row gap-8">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setDone(true);
+          }}
+          className="flex-1 flex flex-col gap-3"
+        >
+          <p style={{ fontFamily: serif, color: C.ink }} className="text-xl mb-1">
+            Datos de envío
+          </p>
+          {[
+            ["Nombre y apellido", "text"],
+            ["Email", "email"],
+            ["Dirección", "text"],
+            ["Ciudad", "text"],
+            ["Código postal", "text"],
+          ].map(([label, type]) => (
+            <label key={label} className="flex flex-col gap-1">
+              <span style={{ fontFamily: sans, color: C.inkSoft }} className="text-xs">
+                {label}
+              </span>
+              <input
+                required
+                type={type}
+                className="px-3 py-2 rounded-md border outline-none"
+                style={{ fontFamily: sans, borderColor: C.line, backgroundColor: C.card, color: C.ink }}
+              />
+            </label>
+          ))}
+
+          <p style={{ fontFamily: serif, color: C.ink }} className="text-xl mt-3 mb-1">
+            Medio de pago
+          </p>
+          <div className="flex flex-col gap-2">
+            {["Tarjeta de crédito o débito", "Transferencia bancaria"].map((m, i) => (
+              <label key={m} className="flex items-center gap-2 text-sm" style={{ fontFamily: sans, color: C.ink }}>
+                <input type="radio" name="pago" defaultChecked={i === 0} />
+                {m}
+              </label>
+            ))}
+          </div>
+
+          <button
+            type="submit"
+            disabled={items.length === 0}
+            className="mt-5 w-full py-3 rounded-full"
+            style={{
+              fontFamily: sans,
+              backgroundColor: items.length === 0 ? C.line : C.olive,
+              color: items.length === 0 ? C.inkSoft : C.paper,
+              fontWeight: 600,
+            }}
+          >
+            Confirmar compra
+          </button>
+        </form>
+
+        <div className="sm:w-72 shrink-0">
+          <div className="rounded-lg p-4" style={{ backgroundColor: C.card, border: `1px solid ${C.line}` }}>
+            <p style={{ fontFamily: serif, color: C.ink }} className="text-lg mb-3">
+              Tu pedido
+            </p>
+            {items.length === 0 ? (
+              <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
+                No hay prendas en el carrito.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3 mb-4">
+                {items.map(({ p, qty }) => (
+                  <div key={p.id} className="flex justify-between text-sm gap-2">
+                    <span style={{ fontFamily: sans, color: C.ink }}>
+                      {p.name} <span style={{ color: C.inkSoft }}>x{qty}</span>
+                    </span>
+                    <span style={{ fontFamily: sans, color: C.ink }} className="shrink-0">
+                      {money(p.price * qty)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="border-t pt-3 flex flex-col gap-1.5" style={{ borderColor: C.line }}>
+              <div className="flex justify-between text-sm">
+                <span style={{ fontFamily: sans, color: C.inkSoft }}>Subtotal</span>
+                <span style={{ fontFamily: sans, color: C.ink }}>{money(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span style={{ fontFamily: sans, color: C.inkSoft }}>Envío</span>
+                <span style={{ fontFamily: sans, color: C.ink }}>Gratis</span>
+              </div>
+              <div className="flex justify-between text-base font-bold pt-1">
+                <span style={{ fontFamily: sans, color: C.ink }}>Total</span>
+                <span style={{ fontFamily: sans, color: C.ink }}>{money(total)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   APP
+--------------------------------------------------------- */
+export default function App() {
+  const [view, setView] = useState("home"); // home | catalog | checkout
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cart, setCart] = useState({}); // id -> qty
+  const [filters, setFilters] = useState({ gender: new Set(), category: new Set() });
+
+  const addToCart = (id) => {
+    setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 }));
+  };
+  const changeQty = (id, delta) => {
+    setCart((c) => {
+      const next = { ...c, [id]: (c[id] || 0) + delta };
+      if (next[id] <= 0) delete next[id];
+      return next;
+    });
+  };
+  const removeFromCart = (id) => {
+    setCart((c) => {
+      const next = { ...c };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const cartItems = useMemo(
+    () =>
+      Object.entries(cart)
+        .map(([id, qty]) => ({ p: PRODUCTS.find((p) => p.id === Number(id)), qty }))
+        .filter((x) => x.p),
+    [cart]
+  );
+  const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
+  const subtotal = cartItems.reduce((s, i) => s + i.p.price * i.qty, 0);
+
+  const goCatalog = ({ gender, category }) => {
+    setFilters({
+      gender: new Set(gender ? [gender] : []),
+      category: new Set(category ? [category] : []),
+    });
+    setView("catalog");
+    setMenuOpen(false);
+    window.scrollTo(0, 0);
+  };
+
+  const titles = { catalog: "Catálogo", checkout: "Finalizar compra" };
+
+  return (
+    <div style={{ backgroundColor: C.paper, minHeight: "100vh" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        input[type="checkbox"], input[type="radio"] { accent-color: ${C.olive}; }
+        .hover-add { transition: opacity 0.2s ease; }
+        @media (hover: hover) and (pointer: fine) {
+          .group:hover .hover-add { opacity: 1 !important; }
         }
-    </script>
-</body>
-</html>
+      `}</style>
+
+      <Header
+        onMenu={() => setMenuOpen(true)}
+        onCart={() => setCartOpen(true)}
+        cartCount={cartCount}
+        view={view}
+        onBack={() => setView(view === "checkout" ? "catalog" : "home")}
+        title={titles[view]}
+      />
+
+      {view === "home" && <Home onAdd={addToCart} goCatalog={goCatalog} />}
+      {view === "catalog" && (
+        <Catalog onAdd={addToCart} filters={filters} setFilters={setFilters} />
+      )}
+      {view === "checkout" && (
+        <Checkout items={cartItems} subtotal={subtotal} onDone={() => setView("home")} />
+      )}
+
+      <MenuDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onPickGender={(g) => goCatalog({ gender: g })}
+        onPickCategory={(c) => goCatalog({ category: c })}
+      />
+
+      <CartDrawer
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        items={cartItems}
+        onQty={changeQty}
+        onRemove={removeFromCart}
+        subtotal={subtotal}
+        onCheckout={() => {
+          setCartOpen(false);
+          setView("checkout");
+          window.scrollTo(0, 0);
+        }}
+      />
+    </div>
+  );
+}
