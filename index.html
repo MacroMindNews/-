@@ -98,7 +98,7 @@
   .product-card{ display:flex; flex-direction:column; }
   .product-image-frame{
     background:var(--card); border:1px solid var(--line); border-radius:8px;
-    padding:7px;
+    padding:7px; cursor:pointer;
   }
   @media(min-width:640px){ .product-image-frame{ padding:12px; } }
   .product-image{
@@ -147,6 +147,23 @@
   }
   .legal-list{ display:flex; flex-direction:column; gap:6px; }
   .legal-list span{ color:var(--ink-soft); font-size:14px; }
+
+  /* ---------- PRODUCT DETAIL ---------- */
+  .detail-wrap{ padding:20px 16px 48px; }
+  @media(min-width:640px){
+    .detail-wrap{ display:flex; gap:36px; align-items:flex-start; }
+    .detail-image-col{ flex:1; max-width:420px; }
+    .detail-info-col{ flex:1; padding-top:6px; }
+  }
+  .detail-image-frame{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .detail-image{ position:relative; width:100%; aspect-ratio:3/4; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .detail-meta{ color:var(--ink-soft); font-size:13px; margin:20px 0 6px; letter-spacing:0.02em; }
+  @media(min-width:640px){ .detail-meta{ margin-top:0; } }
+  .detail-name{ font-family:'Fraunces',serif; font-size:28px; margin:0 0 10px; line-height:1.15; }
+  .detail-price{ font-size:20px; font-weight:700; color:var(--olive-dark); margin:0 0 18px; }
+  .detail-desc{ font-size:14px; color:var(--ink-soft); line-height:1.65; margin:0 0 26px; max-width:46ch; }
+  .detail-add-btn{ width:100%; padding:14px 0; }
+  @media(min-width:640px){ .detail-add-btn{ width:auto; padding:14px 36px; } }
 
   /* ---------- CATALOG ---------- */
   .catalog-wrap{ padding:16px 16px 40px; }
@@ -364,11 +381,17 @@ let view = "home";
 let cart = {};                 // id -> qty
 let filters = { gender:new Set(), category:new Set() };
 let filtersVisible = true;
+let currentProductId = null;
+let previousView = "home";
 
 /* ============ HELPERS ============ */
 const money = n => "$" + n.toLocaleString("es-AR",{maximumFractionDigits:0});
 const findProduct = id => PRODUCTS.find(p => p.id === Number(id));
 const lightTones = new Set(["crema","blanco","gris"]);
+const TONE_LABEL = {
+  oliva:"oliva", crema:"crema", denim:"denim", camel:"camel", negro:"negro",
+  gris:"gris", terracota:"terracota", blanco:"blanco roto", burdeos:"burdeos", botella:"verde botella"
+};
 
 function shirtSVG(tone){
   const color = lightTones.has(tone) ? "#211F1A" : "#F4F2EA";
@@ -384,10 +407,10 @@ function cartSubtotal(){ return cartItemsArray().reduce((s,i)=>s+i.p.price*i.qty
 function productCardHTML(p){
   return `
   <div class="product-card">
-    <div class="product-image-frame">
+    <div class="product-image-frame" onclick="goProduct(${p.id})" role="button" tabindex="0" aria-label="Ver ${p.name}">
       <div class="product-image" style="background-color:var(--sw-${p.tone})">
         <div class="shirt-icon">${shirtSVG(p.tone)}</div>
-        <button class="hover-add" onclick="addToCart(${p.id})" aria-label="Agregar ${p.name} al carrito">
+        <button class="hover-add" onclick="event.stopPropagation(); addToCart(${p.id})" aria-label="Agregar ${p.name} al carrito">
           <span>Agregar al carrito</span>
         </button>
       </div>
@@ -395,7 +418,7 @@ function productCardHTML(p){
     <div class="product-info">
       <p class="product-name">${p.name}</p>
       <p class="product-price">${money(p.price)}</p>
-      <button class="mobile-add" onclick="addToCart(${p.id})">Agregar al carrito</button>
+      <button class="mobile-add" onclick="event.stopPropagation(); addToCart(${p.id})">Agregar al carrito</button>
     </div>
   </div>`;
 }
@@ -476,7 +499,11 @@ document.getElementById("btn-checkout").onclick = () => {
   closeCart();
   goView("checkout");
 };
-document.getElementById("btn-back").onclick = () => goView(view === "checkout" ? "catalog" : "home");
+document.getElementById("btn-back").onclick = () => {
+  if(view === "checkout") goView("catalog");
+  else if(view === "product") goView(previousView);
+  else goView("home");
+};
 
 /* ============ MENU DRAWER CONTENT ============ */
 function renderMenuLists(){
@@ -494,6 +521,11 @@ function goCatalog({gender, category}){
   filters.category = new Set(category ? [category] : []);
   closeMenu();
   goView("catalog");
+}
+function goProduct(id){
+  if(view !== "product") previousView = view;
+  currentProductId = id;
+  goView("product");
 }
 function goView(next){
   view = next;
@@ -670,6 +702,30 @@ function renderCheckout(){
   };
 }
 
+/* ============ RENDER: PRODUCT DETAIL ============ */
+function renderProduct(id){
+  const p = findProduct(id);
+  if(!p) return `<p class="empty-msg">No encontramos esa prenda.</p>`;
+  return `
+    <div class="detail-wrap">
+      <div class="detail-image-col">
+        <div class="detail-image-frame">
+          <div class="detail-image" style="background-color:var(--sw-${p.tone})">
+            <div style="opacity:0.55;">${shirtSVG(p.tone).replace('width="44" height="44"','width="90" height="90"')}</div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-info-col">
+        <p class="detail-meta">${p.gender.toUpperCase()} · ${p.category.toUpperCase()}</p>
+        <h1 class="detail-name">${p.name}</h1>
+        <p class="detail-price">${money(p.price)}</p>
+        <p class="detail-desc">Pieza seleccionada de nuestra colección ${p.gender.toLowerCase()}, en tono ${TONE_LABEL[p.tone]}. Corte clásico y terminaciones prolijas, pensada para durar temporada tras temporada.</p>
+        <button class="btn-pill detail-add-btn" onclick="addToCart(${p.id})">Agregar al carrito</button>
+      </div>
+    </div>
+  `;
+}
+
 /* ============ MASTER RENDER ============ */
 function render(){
   const main = document.getElementById("main-content");
@@ -691,6 +747,11 @@ function render(){
     subTitle.textContent = titles.checkout;
     main.innerHTML = "";
     renderCheckout();
+  } else if(view === "product"){
+    sub.classList.add("show");
+    const p = findProduct(currentProductId);
+    subTitle.textContent = p ? p.name : "Prenda";
+    main.innerHTML = renderProduct(currentProductId);
   }
 }
 
