@@ -1,882 +1,703 @@
-import React, { useMemo, useState } from "react";
-import {
-  Menu,
-  X,
-  ShoppingBag,
-  Plus,
-  Minus,
-  Trash2,
-  ArrowLeft,
-  SlidersHorizontal,
-  Shirt,
-  Instagram,
-  Facebook,
-  Music2,
-} from "lucide-react";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CRUDO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-/* ---------------------------------------------------------
-   TOKENS
---------------------------------------------------------- */
-const C = {
-  paper: "#EFF0E9",
-  card: "#F7F6F0",
-  ink: "#211F1A",
-  inkSoft: "#5C594F",
-  line: "#DAD7CC",
-  olive: "#4E5A38",
-  oliveDark: "#3B4429",
-  denim: "#4C6272",
-};
+  :root{
+    --paper:#EFF0E9;
+    --card:#F7F6F0;
+    --ink:#211F1A;
+    --ink-soft:#5C594F;
+    --line:#DAD7CC;
+    --olive:#4E5A38;
+    --olive-dark:#3B4429;
+    --denim:#4C6272;
 
-const SWATCH = {
-  oliva: "#6B7048",
-  crema: "#E4DCC8",
-  denim: "#4C6272",
-  camel: "#B58A5D",
-  negro: "#2B2A26",
-  gris: "#A8A69C",
-  terracota: "#A85C3B",
-  blanco: "#EDE9DE",
-  burdeos: "#723A3D",
-  botella: "#2F4A3C",
-};
-
-const serif = "'Fraunces', Georgia, serif";
-const sans = "'Space Grotesk', 'Helvetica Neue', sans-serif";
-
-const money = (n) =>
-  "$" + n.toLocaleString("es-AR", { maximumFractionDigits: 0 });
-
-/* ---------------------------------------------------------
-   DATA
---------------------------------------------------------- */
-const CATEGORIES = [
-  "Camperas",
-  "Sweaters",
-  "Camisas",
-  "Pantalones",
-  "Vestidos",
-  "Faldas",
-  "Blazers",
-  "Remeras",
-  "Shorts",
-  "Buzos",
-  "Chalecos",
-];
-
-const GENDERS = ["Mujer", "Hombre", "Unisex", "Niños", "Jóvenes"];
-
-const PRODUCTS = [
-  { id: 1, name: "Campera de corderoy oliva", price: 42000, gender: "Mujer", category: "Camperas", tone: "oliva" },
-  { id: 2, name: "Sweater trenzado crema", price: 28500, gender: "Mujer", category: "Sweaters", tone: "crema" },
-  { id: 3, name: "Vestido midi floreado", price: 35000, gender: "Mujer", category: "Vestidos", tone: "camel" },
-  { id: 4, name: "Blazer de lana gris", price: 47000, gender: "Mujer", category: "Blazers", tone: "gris" },
-  { id: 5, name: "Pollera cargo negra", price: 26000, gender: "Mujer", category: "Faldas", tone: "negro" },
-  { id: 6, name: "Camisa oxford a rayas", price: 24000, gender: "Mujer", category: "Camisas", tone: "blanco" },
-  { id: 7, name: "Buzo oversize crudo", price: 22000, gender: "Mujer", category: "Buzos", tone: "crema" },
-  { id: 8, name: "Chaleco de punto burdeos", price: 19500, gender: "Mujer", category: "Chalecos", tone: "burdeos" },
-  { id: 9, name: "Pantalón palazzo camel", price: 31000, gender: "Mujer", category: "Pantalones", tone: "camel" },
-  { id: 10, name: "Remera básica canesú", price: 14000, gender: "Mujer", category: "Remeras", tone: "blanco" },
-  { id: 11, name: "Campera de jean clásica", price: 39000, gender: "Hombre", category: "Camperas", tone: "denim" },
-  { id: 12, name: "Sweater cuello alto verde", price: 27000, gender: "Hombre", category: "Sweaters", tone: "botella" },
-  { id: 13, name: "Camisa a cuadros flanela", price: 25500, gender: "Hombre", category: "Camisas", tone: "terracota" },
-  { id: 14, name: "Pantalón cargo oliva", price: 32000, gender: "Hombre", category: "Pantalones", tone: "oliva" },
-  { id: 15, name: "Blazer de pana camel", price: 45000, gender: "Hombre", category: "Blazers", tone: "camel" },
-  { id: 16, name: "Short de jean claro", price: 21000, gender: "Hombre", category: "Shorts", tone: "denim" },
-  { id: 17, name: "Buzo con capucha gris", price: 23500, gender: "Hombre", category: "Buzos", tone: "gris" },
-  { id: 18, name: "Remera estampada vintage", price: 16000, gender: "Hombre", category: "Remeras", tone: "negro" },
-  { id: 19, name: "Chaleco acolchado negro", price: 29000, gender: "Hombre", category: "Chalecos", tone: "negro" },
-  { id: 20, name: "Camisa denim western", price: 27500, gender: "Hombre", category: "Camisas", tone: "denim" },
-  { id: 21, name: "Campera bomber", price: 38000, gender: "Unisex", category: "Camperas", tone: "negro" },
-  { id: 22, name: "Buzo crewneck básico", price: 24500, gender: "Unisex", category: "Buzos", tone: "crema" },
-  { id: 23, name: "Pantalón cargo oliva ancho", price: 30500, gender: "Unisex", category: "Pantalones", tone: "oliva" },
-  { id: 24, name: "Remera oversize lisa", price: 15500, gender: "Unisex", category: "Remeras", tone: "blanco" },
-  { id: 25, name: "Sweater a rayas marinero", price: 26500, gender: "Unisex", category: "Sweaters", tone: "denim" },
-  { id: 26, name: "Campera rompeviento", price: 18000, gender: "Niños", category: "Camperas", tone: "denim" },
-  { id: 27, name: "Remera estampada dino", price: 9500, gender: "Niños", category: "Remeras", tone: "camel" },
-  { id: 28, name: "Buzo canguro básico", price: 19500, gender: "Jóvenes", category: "Buzos", tone: "oliva" },
-  { id: 29, name: "Pantalón jogger gris", price: 21500, gender: "Jóvenes", category: "Pantalones", tone: "gris" },
-  { id: 30, name: "Campera parka verde", price: 34000, gender: "Jóvenes", category: "Camperas", tone: "botella" },
-];
-
-// Las 18 prendas más nuevas (orden de carga), sin importar género
-const FEATURED = PRODUCTS.slice(0, 18);
-
-/* ---------------------------------------------------------
-   PRODUCT CARD
---------------------------------------------------------- */
-function ProductCard({ p, onAdd }) {
-  return (
-    <div className="group flex flex-col">
-      <div
-        className="relative w-full overflow-hidden rounded-md"
-        style={{ aspectRatio: "3 / 4", backgroundColor: SWATCH[p.tone] }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Shirt
-            size={44}
-            strokeWidth={1.1}
-            color={p.tone === "crema" || p.tone === "blanco" || p.tone === "gris" ? C.ink : "#F4F2EA"}
-            style={{ opacity: 0.55 }}
-          />
-        </div>
-
-        {/* Overlay con hover — solo en dispositivos con mouse (computadora) */}
-        <button
-          onClick={() => onAdd(p.id)}
-          aria-label={`Agregar ${p.name} al carrito`}
-          className="hover-add absolute inset-0 hidden sm:flex items-center justify-center"
-          style={{ backgroundColor: "rgba(33,31,26,0.45)", opacity: 0 }}
-        >
-          <span
-            className="px-4 py-2 rounded-full text-sm"
-            style={{ fontFamily: sans, backgroundColor: C.paper, color: C.ink, fontWeight: 600 }}
-          >
-            Agregar al carrito
-          </span>
-        </button>
-      </div>
-      <div className="pt-2">
-        <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-medium leading-snug">
-          {p.name}
-        </p>
-        <p style={{ fontFamily: sans, color: C.oliveDark }} className="text-sm font-bold mt-0.5">
-          {money(p.price)}
-        </p>
-        {/* Botón siempre visible — celular / pantallas táctiles */}
-        <button
-          onClick={() => onAdd(p.id)}
-          className="sm:hidden mt-2 w-full py-2 rounded-full text-center"
-          style={{ fontFamily: sans, backgroundColor: C.olive, color: C.paper, fontSize: 12, fontWeight: 600 }}
-        >
-          Agregar al carrito
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------
-   HERO BLOCK (Mujer / Hombre)
---------------------------------------------------------- */
-function Hero({ label, sub, color, onClick, flip }) {
-  return (
-    <button
-      onClick={onClick}
-      className="relative w-full text-left overflow-hidden"
-      style={{ height: 220, backgroundColor: color }}
-    >
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(115deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 2px, transparent 2px, transparent 26px)",
-        }}
-      />
-      <div
-        className={`absolute inset-0 flex flex-col justify-end p-5 ${flip ? "items-end text-right" : ""}`}
-      >
-        <span style={{ fontFamily: sans, color: "rgba(244,242,234,0.75)" }} className="text-xs mb-1">
-          {sub}
-        </span>
-        <span
-          style={{ fontFamily: serif, color: "#F4F2EA", fontStyle: "italic" }}
-          className="text-4xl leading-none"
-        >
-          {label}
-        </span>
-        <span
-          style={{ fontFamily: sans, color: "#F4F2EA" }}
-          className="text-xs mt-2 underline underline-offset-4"
-        >
-          Ver colección
-        </span>
-      </div>
-    </button>
-  );
-}
-
-/* ---------------------------------------------------------
-   HEADER
---------------------------------------------------------- */
-function Header({ onMenu, onCart, cartCount, view, onBack, title }) {
-  return (
-    <div className="sticky top-0 z-20" style={{ backgroundColor: C.paper }}>
-      <div
-        className="flex items-center justify-between px-4 border-b"
-        style={{ height: 56, borderColor: C.line }}
-      >
-        <button onClick={onMenu} aria-label="Abrir menú">
-          <Menu size={22} color={C.ink} />
-        </button>
-        <span style={{ fontFamily: serif, color: C.ink }} className="text-xl tracking-tight">
-          CRUDO
-        </span>
-        <button onClick={onCart} aria-label="Abrir carrito" className="relative">
-          <ShoppingBag size={21} color={C.ink} />
-          {cartCount > 0 && (
-            <span
-              className="absolute -top-2 -right-2 flex items-center justify-center rounded-full text-xs"
-              style={{
-                width: 17,
-                height: 17,
-                backgroundColor: C.olive,
-                color: C.paper,
-                fontFamily: sans,
-                fontSize: 10,
-              }}
-            >
-              {cartCount}
-            </span>
-          )}
-        </button>
-      </div>
-      {view !== "home" && (
-        <div className="flex items-center gap-2 px-4" style={{ height: 44 }}>
-          <button onClick={onBack} aria-label="Volver" className="flex items-center gap-1">
-            <ArrowLeft size={16} color={C.inkSoft} />
-          </button>
-          <span style={{ fontFamily: sans, color: C.ink }} className="text-sm font-medium">
-            {title}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------
-   MENU DRAWER
---------------------------------------------------------- */
-function MenuDrawer({ open, onClose, onPickGender, onPickCategory }) {
-  return (
-    <div
-      className="fixed inset-0 z-40 transition"
-      style={{ pointerEvents: open ? "auto" : "none" }}
-    >
-      <div
-        onClick={onClose}
-        className="absolute inset-0 transition"
-        style={{
-          backgroundColor: "rgba(33,31,26,0.45)",
-          opacity: open ? 1 : 0,
-        }}
-      />
-      <div
-        className="absolute left-0 top-0 h-full overflow-y-auto transition-transform duration-300 ease-out"
-        style={{
-          width: "86%",
-          maxWidth: 340,
-          backgroundColor: "#FFFFFF",
-          transform: open ? "translateX(0)" : "translateX(-100%)",
-        }}
-      >
-        <div className="flex justify-end px-6 pt-6">
-          <button onClick={onClose} aria-label="Cerrar menú">
-            <X size={20} color={C.ink} />
-          </button>
-        </div>
-
-        <div className="px-6 pb-8 pt-2">
-          <p style={{ fontFamily: sans, color: C.ink }} className="text-lg font-bold mb-2">
-            Prendas
-          </p>
-          <div className="border-b mb-3" style={{ borderColor: C.line }} />
-          <div className="flex flex-col mb-8">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                onClick={() => onPickCategory(c)}
-                className="text-left py-2"
-                style={{ fontFamily: sans, color: C.ink, fontSize: 16 }}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontFamily: sans, color: C.ink }} className="text-lg font-bold mb-2">
-            Tipo
-          </p>
-          <div className="border-b mb-3" style={{ borderColor: C.line }} />
-          <div className="flex flex-col mb-8">
-            {GENDERS.map((g) => (
-              <button
-                key={g}
-                onClick={() => onPickGender(g)}
-                className="text-left py-2"
-                style={{ fontFamily: sans, color: C.ink, fontSize: 16 }}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ fontFamily: sans, color: C.ink }} className="text-lg font-bold mb-2">
-            Legal
-          </p>
-          <div className="border-b mb-3" style={{ borderColor: C.line }} />
-          <div className="flex flex-col">
-            {["Políticas de Privacidad", "Políticas de Cambio", "Políticas de Devolución", "Contacto"].map(
-              (l) => (
-                <span key={l} style={{ fontFamily: sans, color: C.ink }} className="text-left py-2 text-base">
-                  {l}
-                </span>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------
-   CART DRAWER
---------------------------------------------------------- */
-function CartDrawer({ open, onClose, items, onQty, onRemove, subtotal, onCheckout }) {
-  return (
-    <div className="fixed inset-0 z-40" style={{ pointerEvents: open ? "auto" : "none" }}>
-      <div
-        onClick={onClose}
-        className="absolute inset-0 transition"
-        style={{ backgroundColor: "rgba(33,31,26,0.45)", opacity: open ? 1 : 0 }}
-      />
-      <div
-        className="absolute right-0 top-0 h-full flex flex-col transition-transform duration-300 ease-out"
-        style={{
-          width: "88%",
-          maxWidth: 360,
-          backgroundColor: C.paper,
-          transform: open ? "translateX(0)" : "translateX(100%)",
-        }}
-      >
-        <div
-          className="flex items-center justify-between px-5 border-b"
-          style={{ height: 56, borderColor: C.line }}
-        >
-          <span style={{ fontFamily: serif, color: C.ink }} className="text-lg">
-            Tu carrito
-          </span>
-          <button onClick={onClose} aria-label="Cerrar carrito">
-            <X size={20} color={C.ink} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5">
-          {items.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center px-6">
-              <ShoppingBag size={28} color={C.inkSoft} />
-              <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm mt-3">
-                Todavía no agregaste nada. Elegí una prenda y tocá el "+" para sumarla.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y" style={{ borderColor: C.line }}>
-              {items.map(({ p, qty }) => (
-                <div key={p.id} className="flex gap-3 py-4">
-                  <div
-                    className="flex items-center justify-center rounded-md shrink-0"
-                    style={{ width: 56, height: 68, backgroundColor: SWATCH[p.tone] }}
-                  >
-                    <Shirt
-                      size={24}
-                      strokeWidth={1.2}
-                      color={p.tone === "crema" || p.tone === "blanco" || p.tone === "gris" ? C.ink : "#F4F2EA"}
-                      style={{ opacity: 0.6 }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-medium leading-snug">
-                      {p.name}
-                    </p>
-                    <p style={{ fontFamily: sans, color: C.oliveDark }} className="text-sm font-bold mt-0.5">
-                      {money(p.price)}
-                    </p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <button
-                        onClick={() => onQty(p.id, -1)}
-                        className="flex items-center justify-center rounded-full border"
-                        style={{ width: 24, height: 24, borderColor: C.line }}
-                      >
-                        <Minus size={12} color={C.ink} />
-                      </button>
-                      <span style={{ fontFamily: sans, color: C.ink }} className="text-sm">
-                        {qty}
-                      </span>
-                      <button
-                        onClick={() => onQty(p.id, 1)}
-                        className="flex items-center justify-center rounded-full border"
-                        style={{ width: 24, height: 24, borderColor: C.line }}
-                      >
-                        <Plus size={12} color={C.ink} />
-                      </button>
-                      <button onClick={() => onRemove(p.id)} className="ml-auto" aria-label="Quitar">
-                        <Trash2 size={16} color={C.inkSoft} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="px-5 py-4 border-t" style={{ borderColor: C.line }}>
-          <div className="flex items-center justify-between mb-3">
-            <span style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
-              Subtotal
-            </span>
-            <span style={{ fontFamily: sans, color: C.ink }} className="text-base font-bold">
-              {money(subtotal)}
-            </span>
-          </div>
-          <button
-            onClick={onCheckout}
-            disabled={items.length === 0}
-            className="w-full py-3 rounded-full text-center"
-            style={{
-              fontFamily: sans,
-              backgroundColor: items.length === 0 ? C.line : C.olive,
-              color: items.length === 0 ? C.inkSoft : C.paper,
-              fontWeight: 600,
-            }}
-          >
-            Finalizar compra
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------
-   HOME VIEW
---------------------------------------------------------- */
-function Home({ onAdd, goCatalog }) {
-  return (
-    <div>
-      <Hero
-        label="Mujer"
-        sub="Nueva selección"
-        color={C.olive}
-        onClick={() => goCatalog({ gender: "Mujer" })}
-      />
-      <Hero
-        label="Hombre"
-        sub="Nueva selección"
-        color={C.denim}
-        onClick={() => goCatalog({ gender: "Hombre" })}
-        flip
-      />
-
-      <div className="px-4 pt-8 pb-3">
-        <h2 style={{ fontFamily: serif, color: C.ink }} className="text-3xl">
-          Destacado
-        </h2>
-        <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm mt-1">
-          Lo último que llegó a la tienda.
-        </p>
-      </div>
-
-      <div className="px-4 grid grid-cols-3 gap-x-3 sm:gap-x-4 gap-y-6">
-        {FEATURED.map((p) => (
-          <ProductCard key={p.id} p={p} onAdd={onAdd} />
-        ))}
-      </div>
-
-      <div className="flex justify-center py-8">
-        <button
-          onClick={() => goCatalog({})}
-          className="px-8 py-3 rounded-full"
-          style={{ fontFamily: sans, backgroundColor: C.olive, color: C.paper, fontWeight: 600 }}
-        >
-          Ver más
-        </button>
-      </div>
-
-      <footer className="px-5 py-8" style={{ backgroundColor: C.card, borderTop: `1px solid ${C.line}` }}>
-        <p style={{ fontFamily: serif, color: C.ink }} className="text-2xl mb-4">
-          CRUDO
-        </p>
-        <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-xs mb-2">
-          Nuestras redes
-        </p>
-        <div className="flex gap-2 mb-6">
-          {[Instagram, Facebook, Music2].map((Icon, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-center rounded-md"
-              style={{ width: 34, height: 34, backgroundColor: C.ink }}
-            >
-              <Icon size={16} color={C.paper} />
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          {["Políticas de Privacidad", "Políticas de Cambio", "Políticas de Devolución", "Contacto"].map(
-            (l) => (
-              <span key={l} style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
-                {l}
-              </span>
-            )
-          )}
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------
-   CATALOG VIEW
---------------------------------------------------------- */
-function Catalog({ onAdd, filters, setFilters }) {
-  const [showFilters, setShowFilters] = useState(true);
-
-  const toggle = (key, value) => {
-    setFilters((f) => {
-      const set = new Set(f[key]);
-      set.has(value) ? set.delete(value) : set.add(value);
-      return { ...f, [key]: set };
-    });
-  };
-
-  const results = useMemo(() => {
-    return PRODUCTS.filter((p) => {
-      const gOk = filters.gender.size === 0 || filters.gender.has(p.gender);
-      const cOk = filters.category.size === 0 || filters.category.has(p.category);
-      return gOk && cOk;
-    });
-  }, [filters]);
-
-  const clear = () => setFilters({ gender: new Set(), category: new Set() });
-  const activeCount = filters.gender.size + filters.category.size;
-
-  return (
-    <div className="px-4 pt-4 pb-10">
-      <div className="flex items-center justify-between mb-4">
-        <span style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
-          {results.length} {results.length === 1 ? "prenda" : "prendas"}
-        </span>
-        <button
-          onClick={() => setShowFilters((s) => !s)}
-          className="flex items-center gap-1.5 text-sm"
-          style={{ fontFamily: sans, color: C.ink }}
-        >
-          <SlidersHorizontal size={15} />
-          Filtros{activeCount > 0 ? ` (${activeCount})` : ""}
-        </button>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-6">
-        {showFilters && (
-          <aside
-            className="sm:w-48 shrink-0 pb-6 sm:pb-0 sm:border-r"
-            style={{ borderColor: C.line }}
-          >
-            <div className="sm:pr-5">
-              <div className="flex items-center justify-between mb-2">
-                <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-semibold">
-                  Género
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 mb-6">
-                {GENDERS.map((g) => (
-                  <label key={g} className="flex items-center gap-2 text-sm" style={{ fontFamily: sans, color: C.ink }}>
-                    <input
-                      type="checkbox"
-                      checked={filters.gender.has(g)}
-                      onChange={() => toggle("gender", g)}
-                    />
-                    {g}
-                  </label>
-                ))}
-              </div>
-
-              <p style={{ fontFamily: sans, color: C.ink }} className="text-sm font-semibold mb-2">
-                Prenda
-              </p>
-              <div className="flex flex-col gap-2 mb-6">
-                {CATEGORIES.map((c) => (
-                  <label key={c} className="flex items-center gap-2 text-sm" style={{ fontFamily: sans, color: C.ink }}>
-                    <input
-                      type="checkbox"
-                      checked={filters.category.has(c)}
-                      onChange={() => toggle("category", c)}
-                    />
-                    {c}
-                  </label>
-                ))}
-              </div>
-
-              {activeCount > 0 && (
-                <button
-                  onClick={clear}
-                  className="text-sm underline underline-offset-4"
-                  style={{ fontFamily: sans, color: C.inkSoft }}
-                >
-                  Limpiar filtros
-                </button>
-              )}
-            </div>
-          </aside>
-        )}
-
-        <div className="flex-1">
-          {results.length === 0 ? (
-            <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm py-10 text-center">
-              No encontramos prendas con esos filtros.
-            </p>
-          ) : (
-            <div className="grid grid-cols-3 gap-x-3 sm:gap-x-4 gap-y-6">
-              {results.map((p) => (
-                <ProductCard key={p.id} p={p} onAdd={onAdd} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------
-   CHECKOUT VIEW
---------------------------------------------------------- */
-function Checkout({ items, subtotal, onDone }) {
-  const [done, setDone] = useState(false);
-
-  if (done) {
-    return (
-      <div className="px-6 py-20 flex flex-col items-center text-center">
-        <div
-          className="flex items-center justify-center rounded-full mb-4"
-          style={{ width: 56, height: 56, backgroundColor: C.olive }}
-        >
-          <Shirt size={26} color={C.paper} />
-        </div>
-        <h2 style={{ fontFamily: serif, color: C.ink }} className="text-2xl mb-2">
-          Compra confirmada
-        </h2>
-        <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm mb-6">
-          Te enviamos un correo con el detalle del pedido.
-        </p>
-        <button
-          onClick={onDone}
-          className="px-6 py-2.5 rounded-full"
-          style={{ fontFamily: sans, backgroundColor: C.olive, color: C.paper, fontWeight: 600 }}
-        >
-          Volver a la tienda
-        </button>
-      </div>
-    );
+    --sw-oliva:#6B7048;
+    --sw-crema:#E4DCC8;
+    --sw-denim:#4C6272;
+    --sw-camel:#B58A5D;
+    --sw-negro:#2B2A26;
+    --sw-gris:#A8A69C;
+    --sw-terracota:#A85C3B;
+    --sw-blanco:#EDE9DE;
+    --sw-burdeos:#723A3D;
+    --sw-botella:#2F4A3C;
   }
 
-  const shipping = subtotal > 0 ? 0 : 0;
-  const total = subtotal + shipping;
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Space Grotesk',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{ font:inherit; border:none; background:none; cursor:pointer; padding:0; color:inherit; }
+  input[type="checkbox"], input[type="radio"]{ accent-color:var(--olive); }
+  a{ color:inherit; }
+  .serif{ font-family:'Fraunces',Georgia,serif; }
+  .sans{ font-family:'Space Grotesk',sans-serif; }
 
-  return (
-    <div className="px-4 py-6">
-      <div className="flex flex-col sm:flex-row gap-8">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            setDone(true);
-          }}
-          className="flex-1 flex flex-col gap-3"
-        >
-          <p style={{ fontFamily: serif, color: C.ink }} className="text-xl mb-1">
-            Datos de envío
-          </p>
-          {[
-            ["Nombre y apellido", "text"],
-            ["Email", "email"],
-            ["Dirección", "text"],
-            ["Ciudad", "text"],
-            ["Código postal", "text"],
-          ].map(([label, type]) => (
-            <label key={label} className="flex flex-col gap-1">
-              <span style={{ fontFamily: sans, color: C.inkSoft }} className="text-xs">
-                {label}
-              </span>
-              <input
-                required
-                type={type}
-                className="px-3 py-2 rounded-md border outline-none"
-                style={{ fontFamily: sans, borderColor: C.line, backgroundColor: C.card, color: C.ink }}
-              />
-            </label>
-          ))}
+  /* ---------- HEADER ---------- */
+  header.topbar{
+    position:sticky; top:0; z-index:20;
+    background:var(--paper);
+  }
+  .topbar-row{
+    display:flex; align-items:center; justify-content:space-between;
+    height:56px; padding:0 16px; border-bottom:1px solid var(--line);
+  }
+  .logo{ font-family:'Fraunces',serif; font-size:22px; letter-spacing:-0.02em; }
+  .icon-btn{ position:relative; display:flex; align-items:center; justify-content:center; }
+  .cart-badge{
+    position:absolute; top:-8px; right:-8px;
+    width:17px; height:17px; border-radius:999px;
+    background:var(--olive); color:var(--paper);
+    font-size:10px; display:flex; align-items:center; justify-content:center;
+  }
+  .subheader{
+    display:none; align-items:center; gap:8px; height:44px; padding:0 16px;
+  }
+  .subheader.show{ display:flex; }
+  .subheader span{ font-size:14px; font-weight:500; }
 
-          <p style={{ fontFamily: serif, color: C.ink }} className="text-xl mt-3 mb-1">
-            Medio de pago
-          </p>
-          <div className="flex flex-col gap-2">
-            {["Tarjeta de crédito o débito", "Transferencia bancaria"].map((m, i) => (
-              <label key={m} className="flex items-center gap-2 text-sm" style={{ fontFamily: sans, color: C.ink }}>
-                <input type="radio" name="pago" defaultChecked={i === 0} />
-                {m}
-              </label>
-            ))}
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative; width:100%; height:220px; overflow:hidden;
+    text-align:left; display:block;
+  }
+  .hero::before{
+    content:""; position:absolute; inset:0;
+    background-image:repeating-linear-gradient(115deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 2px, transparent 2px, transparent 26px);
+  }
+  .hero-content{
+    position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:20px;
+  }
+  .hero.flip .hero-content{ align-items:flex-end; text-align:right; }
+  .hero-sub{ color:rgba(244,242,234,0.75); font-size:12px; margin-bottom:4px; }
+  .hero-label{ font-family:'Fraunces',serif; font-style:italic; color:#F4F2EA; font-size:38px; line-height:1; }
+  .hero-cta{ color:#F4F2EA; font-size:12px; margin-top:8px; text-decoration:underline; text-underline-offset:4px; }
+
+  /* ---------- SECTION HEADS ---------- */
+  .section-head{ padding:32px 16px 8px; }
+  .section-head h2{ font-family:'Fraunces',serif; font-size:30px; margin:0; }
+  .section-head p{ color:var(--ink-soft); font-size:14px; margin:6px 0 0; }
+
+  /* ---------- PRODUCT GRID ---------- */
+  .grid{
+    padding:0 16px; display:grid; grid-template-columns:repeat(3,1fr);
+    gap:24px 12px;
+  }
+  @media(min-width:640px){ .grid{ gap:24px 16px; } }
+
+  .product-card{ display:flex; flex-direction:column; }
+  .product-image-frame{
+    background:var(--card); border:1px solid var(--line); border-radius:8px;
+    padding:7px;
+  }
+  @media(min-width:640px){ .product-image-frame{ padding:12px; } }
+  .product-image{
+    position:relative; width:100%; aspect-ratio:3/4; border-radius:4px; overflow:hidden;
+  }
+  .product-image .shirt-icon{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.55;
+  }
+  .hover-add{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(33,31,26,0.45); opacity:0; transition:opacity .2s ease;
+  }
+  @media (hover:hover) and (pointer:fine){
+    .hover-add{ display:flex; }
+    .product-card:hover .hover-add{ opacity:1; }
+  }
+  .hover-add span{
+    background:var(--paper); color:var(--ink); font-weight:600; font-size:14px;
+    padding:8px 16px; border-radius:999px;
+  }
+  .product-info{ padding-top:8px; }
+  .product-name{ font-size:14px; font-weight:500; line-height:1.3; margin:0; }
+  .product-price{ font-size:14px; font-weight:700; color:var(--olive-dark); margin:2px 0 0; }
+  .mobile-add{
+    display:block; width:100%; margin-top:8px; padding:8px 0; border-radius:999px;
+    background:var(--olive); color:var(--paper); font-size:12px; font-weight:600; text-align:center;
+  }
+  @media (hover:hover) and (pointer:fine){ .mobile-add{ display:none; } }
+
+  /* ---------- VER MAS ---------- */
+  .vermas-wrap{ display:flex; justify-content:center; padding:32px 0; }
+  .btn-pill{
+    padding:12px 32px; border-radius:999px; background:var(--olive); color:var(--paper);
+    font-weight:600; font-size:14px;
+  }
+  .btn-pill:disabled{ background:var(--line); color:var(--ink-soft); }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding:32px 20px; background:var(--card); border-top:1px solid var(--line); }
+  footer .foot-logo{ font-family:'Fraunces',serif; font-size:26px; margin:0 0 16px; }
+  footer .foot-label{ color:var(--ink-soft); font-size:12px; margin:0 0 8px; }
+  .social-row{ display:flex; gap:8px; margin-bottom:24px; }
+  .social-sq{
+    width:34px; height:34px; border-radius:6px; background:var(--ink); color:var(--paper);
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
+  }
+  .legal-list{ display:flex; flex-direction:column; gap:6px; }
+  .legal-list span{ color:var(--ink-soft); font-size:14px; }
+
+  /* ---------- CATALOG ---------- */
+  .catalog-wrap{ padding:16px 16px 40px; }
+  .catalog-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .catalog-top .count{ color:var(--ink-soft); font-size:14px; }
+  .filter-toggle{ display:flex; align-items:center; gap:6px; font-size:14px; }
+  .catalog-body{ display:flex; flex-direction:column; gap:24px; }
+  @media(min-width:640px){ .catalog-body{ flex-direction:row; } }
+
+  .filters{ padding-bottom:24px; border-bottom:1px solid var(--line); }
+  @media(min-width:640px){
+    .filters{ width:190px; flex-shrink:0; padding-bottom:0; border-bottom:none; border-right:1px solid var(--line); padding-right:20px; }
+  }
+  .filters.hidden{ display:none; }
+  .filter-title{ font-size:14px; font-weight:600; margin:0 0 8px; }
+  .filter-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+  .filter-list label{ display:flex; align-items:center; gap:8px; font-size:14px; }
+  .clear-filters{ font-size:14px; color:var(--ink-soft); text-decoration:underline; text-underline-offset:4px; }
+  .catalog-results{ flex:1; }
+  .empty-msg{ color:var(--ink-soft); font-size:14px; text-align:center; padding:40px 0; }
+
+  /* ---------- CHECKOUT ---------- */
+  .checkout-wrap{ padding:24px 16px; }
+  .checkout-body{ display:flex; flex-direction:column; gap:32px; }
+  @media(min-width:640px){ .checkout-body{ flex-direction:row; } }
+  .checkout-form{ flex:1; display:flex; flex-direction:column; gap:12px; }
+  .checkout-form h3{ font-family:'Fraunces',serif; font-size:20px; margin:4px 0; font-weight:400; }
+  .field{ display:flex; flex-direction:column; gap:4px; }
+  .field span{ color:var(--ink-soft); font-size:12px; }
+  .field input{
+    padding:10px 12px; border-radius:6px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink); font-family:'Space Grotesk',sans-serif; outline:none;
+  }
+  .radio-row{ display:flex; flex-direction:column; gap:8px; }
+  .radio-row label{ display:flex; align-items:center; gap:8px; font-size:14px; }
+  .checkout-summary{ flex-shrink:0; }
+  @media(min-width:640px){ .checkout-summary{ width:280px; } }
+  .summary-card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .summary-card h4{ font-family:'Fraunces',serif; font-weight:400; font-size:18px; margin:0 0 12px; }
+  .summary-line{ display:flex; justify-content:space-between; font-size:14px; margin-bottom:10px; gap:8px; }
+  .summary-line .muted{ color:var(--ink-soft); }
+  .summary-total{ border-top:1px solid var(--line); padding-top:12px; margin-top:4px; display:flex; flex-direction:column; gap:6px; }
+  .summary-total .row{ display:flex; justify-content:space-between; font-size:14px; }
+  .summary-total .row.big{ font-size:16px; font-weight:700; padding-top:4px; }
+
+  .checkout-done{ padding:60px 24px; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .done-icon{ width:56px; height:56px; border-radius:999px; background:var(--olive); display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+  .checkout-done h2{ font-family:'Fraunces',serif; font-size:24px; margin:0 0 8px; }
+  .checkout-done p{ color:var(--ink-soft); font-size:14px; margin:0 0 24px; }
+
+  /* ---------- DRAWERS ---------- */
+  .drawer-overlay{
+    position:fixed; inset:0; z-index:40; pointer-events:none;
+  }
+  .drawer-overlay.open{ pointer-events:auto; }
+  .drawer-scrim{
+    position:absolute; inset:0; background:rgba(33,31,26,0.45); opacity:0; transition:opacity .25s ease;
+  }
+  .drawer-overlay.open .drawer-scrim{ opacity:1; }
+
+  .drawer-panel{
+    position:absolute; top:0; height:100%; overflow-y:auto;
+    background:#fff; transition:transform .3s ease;
+  }
+  #menu-drawer .drawer-panel{ left:0; width:86%; max-width:340px; transform:translateX(-100%); }
+  #menu-drawer.open .drawer-panel{ transform:translateX(0); }
+
+  #cart-drawer .drawer-panel{
+    right:0; width:88%; max-width:360px; transform:translateX(100%);
+    background:var(--paper); display:flex; flex-direction:column;
+  }
+  #cart-drawer.open .drawer-panel{ transform:translateX(0); }
+
+  .drawer-close-row{ display:flex; justify-content:flex-end; padding:24px 24px 0; }
+  .menu-body{ padding:8px 24px 32px; }
+  .menu-head{ font-size:18px; font-weight:700; margin:0 0 8px; }
+  .menu-rule{ border-bottom:1px solid var(--line); margin-bottom:12px; }
+  .menu-list{ display:flex; flex-direction:column; margin-bottom:32px; }
+  .menu-list button, .menu-list span{ text-align:left; padding:8px 0; font-size:16px; }
+
+  .cart-drawer-head{
+    display:flex; align-items:center; justify-content:space-between;
+    height:56px; padding:0 20px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .cart-drawer-head span{ font-family:'Fraunces',serif; font-size:18px; }
+  .cart-empty{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 24px; }
+  .cart-empty p{ color:var(--ink-soft); font-size:14px; margin-top:12px; }
+  .cart-items{ flex:1; overflow-y:auto; padding:0 20px; }
+  .cart-item{ display:flex; gap:12px; padding:16px 0; border-bottom:1px solid var(--line); }
+  .cart-item:last-child{ border-bottom:none; }
+  .cart-item-swatch{ width:56px; height:68px; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .cart-item-body{ flex:1; min-width:0; }
+  .cart-item-name{ font-size:14px; font-weight:500; margin:0; line-height:1.3; }
+  .cart-item-price{ font-size:14px; font-weight:700; color:var(--olive-dark); margin:2px 0 0; }
+  .qty-row{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+  .qty-btn{ width:24px; height:24px; border-radius:999px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; }
+  .qty-row .remove-btn{ margin-left:auto; }
+  .cart-drawer-foot{ padding:16px 20px; border-top:1px solid var(--line); flex-shrink:0; }
+  .cart-subtotal-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .cart-subtotal-row span:first-child{ color:var(--ink-soft); font-size:14px; }
+  .cart-subtotal-row span:last-child{ font-size:16px; font-weight:700; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <button class="icon-btn" id="btn-menu" aria-label="Abrir menú">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#211F1A" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <span class="logo">CRUDO</span>
+    <button class="icon-btn" id="btn-cart" aria-label="Abrir carrito">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12.5a1 1 0 0 1-1 .9H8a1 1 0 0 1-1-.9L6 8Z" stroke="#211F1A" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#211F1A" stroke-width="1.6"/></svg>
+      <span class="cart-badge" id="cart-badge" style="display:none;">0</span>
+    </button>
+  </div>
+  <div class="subheader" id="subheader">
+    <button id="btn-back" aria-label="Volver" style="display:flex;align-items:center;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="#5C594F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span id="subheader-title"></span>
+  </div>
+</header>
+
+<main id="main-content"></main>
+
+<!-- MENU DRAWER -->
+<div class="drawer-overlay" id="menu-drawer">
+  <div class="drawer-scrim" id="menu-scrim"></div>
+  <div class="drawer-panel">
+    <div class="drawer-close-row">
+      <button id="btn-menu-close" aria-label="Cerrar menú">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#211F1A" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="menu-body">
+      <p class="menu-head serif" style="font-family:'Space Grotesk',sans-serif;">Prendas</p>
+      <div class="menu-rule"></div>
+      <div class="menu-list" id="menu-categories"></div>
+
+      <p class="menu-head">Tipo</p>
+      <div class="menu-rule"></div>
+      <div class="menu-list" id="menu-genders"></div>
+
+      <p class="menu-head">Legal</p>
+      <div class="menu-rule"></div>
+      <div class="menu-list" id="menu-legal"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CART DRAWER -->
+<div class="drawer-overlay" id="cart-drawer">
+  <div class="drawer-scrim" id="cart-scrim"></div>
+  <div class="drawer-panel">
+    <div class="cart-drawer-head">
+      <span>Tu carrito</span>
+      <button id="btn-cart-close" aria-label="Cerrar carrito">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#211F1A" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="cart-body"></div>
+    <div class="cart-drawer-foot">
+      <div class="cart-subtotal-row">
+        <span>Subtotal</span>
+        <span id="cart-subtotal">$0</span>
+      </div>
+      <button class="btn-pill" style="width:100%;" id="btn-checkout" disabled>Finalizar compra</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const CATEGORIES = ["Camperas","Sweaters","Camisas","Pantalones","Vestidos","Faldas","Blazers","Remeras","Shorts","Buzos","Chalecos"];
+const GENDERS = ["Mujer","Hombre","Unisex","Niños","Jóvenes"];
+
+const PRODUCTS = [
+  {id:1,name:"Campera de corderoy oliva",price:42000,gender:"Mujer",category:"Camperas",tone:"oliva"},
+  {id:2,name:"Sweater trenzado crema",price:28500,gender:"Mujer",category:"Sweaters",tone:"crema"},
+  {id:3,name:"Vestido midi floreado",price:35000,gender:"Mujer",category:"Vestidos",tone:"camel"},
+  {id:4,name:"Blazer de lana gris",price:47000,gender:"Mujer",category:"Blazers",tone:"gris"},
+  {id:5,name:"Pollera cargo negra",price:26000,gender:"Mujer",category:"Faldas",tone:"negro"},
+  {id:6,name:"Camisa oxford a rayas",price:24000,gender:"Mujer",category:"Camisas",tone:"blanco"},
+  {id:7,name:"Buzo oversize crudo",price:22000,gender:"Mujer",category:"Buzos",tone:"crema"},
+  {id:8,name:"Chaleco de punto burdeos",price:19500,gender:"Mujer",category:"Chalecos",tone:"burdeos"},
+  {id:9,name:"Pantalón palazzo camel",price:31000,gender:"Mujer",category:"Pantalones",tone:"camel"},
+  {id:10,name:"Remera básica canesú",price:14000,gender:"Mujer",category:"Remeras",tone:"blanco"},
+  {id:11,name:"Campera de jean clásica",price:39000,gender:"Hombre",category:"Camperas",tone:"denim"},
+  {id:12,name:"Sweater cuello alto verde",price:27000,gender:"Hombre",category:"Sweaters",tone:"botella"},
+  {id:13,name:"Camisa a cuadros flanela",price:25500,gender:"Hombre",category:"Camisas",tone:"terracota"},
+  {id:14,name:"Pantalón cargo oliva",price:32000,gender:"Hombre",category:"Pantalones",tone:"oliva"},
+  {id:15,name:"Blazer de pana camel",price:45000,gender:"Hombre",category:"Blazers",tone:"camel"},
+  {id:16,name:"Short de jean claro",price:21000,gender:"Hombre",category:"Shorts",tone:"denim"},
+  {id:17,name:"Buzo con capucha gris",price:23500,gender:"Hombre",category:"Buzos",tone:"gris"},
+  {id:18,name:"Remera estampada vintage",price:16000,gender:"Hombre",category:"Remeras",tone:"negro"},
+  {id:19,name:"Chaleco acolchado negro",price:29000,gender:"Hombre",category:"Chalecos",tone:"negro"},
+  {id:20,name:"Camisa denim western",price:27500,gender:"Hombre",category:"Camisas",tone:"denim"},
+  {id:21,name:"Campera bomber",price:38000,gender:"Unisex",category:"Camperas",tone:"negro"},
+  {id:22,name:"Buzo crewneck básico",price:24500,gender:"Unisex",category:"Buzos",tone:"crema"},
+  {id:23,name:"Pantalón cargo oliva ancho",price:30500,gender:"Unisex",category:"Pantalones",tone:"oliva"},
+  {id:24,name:"Remera oversize lisa",price:15500,gender:"Unisex",category:"Remeras",tone:"blanco"},
+  {id:25,name:"Sweater a rayas marinero",price:26500,gender:"Unisex",category:"Sweaters",tone:"denim"},
+  {id:26,name:"Campera rompeviento",price:18000,gender:"Niños",category:"Camperas",tone:"denim"},
+  {id:27,name:"Remera estampada dino",price:9500,gender:"Niños",category:"Remeras",tone:"camel"},
+  {id:28,name:"Buzo canguro básico",price:19500,gender:"Jóvenes",category:"Buzos",tone:"oliva"},
+  {id:29,name:"Pantalón jogger gris",price:21500,gender:"Jóvenes",category:"Pantalones",tone:"gris"},
+  {id:30,name:"Campera parka verde",price:34000,gender:"Jóvenes",category:"Camperas",tone:"botella"},
+];
+const FEATURED = PRODUCTS.slice(0,18);
+const LEGAL_LINKS = ["Políticas de Privacidad","Políticas de Cambio","Políticas de Devolución","Contacto"];
+
+/* ============ STATE ============ */
+let view = "home";
+let cart = {};                 // id -> qty
+let filters = { gender:new Set(), category:new Set() };
+let filtersVisible = true;
+
+/* ============ HELPERS ============ */
+const money = n => "$" + n.toLocaleString("es-AR",{maximumFractionDigits:0});
+const findProduct = id => PRODUCTS.find(p => p.id === Number(id));
+const lightTones = new Set(["crema","blanco","gris"]);
+
+function shirtSVG(tone){
+  const color = lightTones.has(tone) ? "#211F1A" : "#F4F2EA";
+  return `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.1"><path d="M8 4 4 7v3h2v9h12v-9h2V7l-4-3-2 2h-4L8 4Z" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function cartItemsArray(){
+  return Object.entries(cart).map(([id,qty]) => ({p:findProduct(id), qty})).filter(x=>x.p);
+}
+function cartCount(){ return cartItemsArray().reduce((s,i)=>s+i.qty,0); }
+function cartSubtotal(){ return cartItemsArray().reduce((s,i)=>s+i.p.price*i.qty,0); }
+
+/* ============ PRODUCT CARD ============ */
+function productCardHTML(p){
+  return `
+  <div class="product-card">
+    <div class="product-image-frame">
+      <div class="product-image" style="background-color:var(--sw-${p.tone})">
+        <div class="shirt-icon">${shirtSVG(p.tone)}</div>
+        <button class="hover-add" onclick="addToCart(${p.id})" aria-label="Agregar ${p.name} al carrito">
+          <span>Agregar al carrito</span>
+        </button>
+      </div>
+    </div>
+    <div class="product-info">
+      <p class="product-name">${p.name}</p>
+      <p class="product-price">${money(p.price)}</p>
+      <button class="mobile-add" onclick="addToCart(${p.id})">Agregar al carrito</button>
+    </div>
+  </div>`;
+}
+
+/* ============ CART ACTIONS ============ */
+function addToCart(id){
+  cart[id] = (cart[id]||0) + 1;
+  refreshCartUI();
+}
+function changeQty(id, delta){
+  const next = (cart[id]||0) + delta;
+  if(next <= 0) delete cart[id]; else cart[id] = next;
+  refreshCartUI();
+}
+function removeFromCart(id){
+  delete cart[id];
+  refreshCartUI();
+}
+function refreshCartUI(){
+  const count = cartCount();
+  const badge = document.getElementById("cart-badge");
+  badge.textContent = count;
+  badge.style.display = count > 0 ? "flex" : "none";
+  renderCartDrawer();
+  if(view === "checkout") renderCheckout();
+}
+
+/* ============ CART DRAWER ============ */
+function renderCartDrawer(){
+  const items = cartItemsArray();
+  const body = document.getElementById("cart-body");
+  if(items.length === 0){
+    body.innerHTML = `
+      <div class="cart-empty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12.5a1 1 0 0 1-1 .9H8a1 1 0 0 1-1-.9L6 8Z" stroke="#5C594F" stroke-width="1.6"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#5C594F" stroke-width="1.6"/></svg>
+        <p>Todavía no agregaste nada. Elegí una prenda y sumala al carrito.</p>
+      </div>`;
+  } else {
+    body.innerHTML = `<div class="cart-items">` + items.map(({p,qty}) => `
+      <div class="cart-item">
+        <div class="cart-item-swatch" style="background-color:var(--sw-${p.tone})">${shirtSVG(p.tone)}</div>
+        <div class="cart-item-body">
+          <p class="cart-item-name">${p.name}</p>
+          <p class="cart-item-price">${money(p.price)}</p>
+          <div class="qty-row">
+            <button class="qty-btn" onclick="changeQty(${p.id},-1)">
+              <svg width="12" height="12" viewBox="0 0 24 24"><path d="M5 12h14" stroke="#211F1A" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <span>${qty}</span>
+            <button class="qty-btn" onclick="changeQty(${p.id},1)">
+              <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#211F1A" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <button class="remove-btn" onclick="removeFromCart(${p.id})" aria-label="Quitar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m-8 0 1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13" stroke="#5C594F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`).join("") + `</div>`;
+  }
+  document.getElementById("cart-subtotal").textContent = money(cartSubtotal());
+  document.getElementById("btn-checkout").disabled = items.length === 0;
+}
+
+/* ============ DRAWER OPEN/CLOSE ============ */
+function openMenu(){ document.getElementById("menu-drawer").classList.add("open"); }
+function closeMenu(){ document.getElementById("menu-drawer").classList.remove("open"); }
+function openCart(){ document.getElementById("cart-drawer").classList.add("open"); }
+function closeCart(){ document.getElementById("cart-drawer").classList.remove("open"); }
+
+document.getElementById("btn-menu").onclick = openMenu;
+document.getElementById("btn-menu-close").onclick = closeMenu;
+document.getElementById("menu-scrim").onclick = closeMenu;
+document.getElementById("btn-cart").onclick = openCart;
+document.getElementById("btn-cart-close").onclick = closeCart;
+document.getElementById("cart-scrim").onclick = closeCart;
+document.getElementById("btn-checkout").onclick = () => {
+  if(cartCount() === 0) return;
+  closeCart();
+  goView("checkout");
+};
+document.getElementById("btn-back").onclick = () => goView(view === "checkout" ? "catalog" : "home");
+
+/* ============ MENU DRAWER CONTENT ============ */
+function renderMenuLists(){
+  document.getElementById("menu-categories").innerHTML = CATEGORIES.map(c =>
+    `<button onclick="goCatalog({category:'${c}'})">${c}</button>`).join("");
+  document.getElementById("menu-genders").innerHTML = GENDERS.map(g =>
+    `<button onclick="goCatalog({gender:'${g}'})">${g}</button>`).join("");
+  document.getElementById("menu-legal").innerHTML = LEGAL_LINKS.map(l =>
+    `<span>${l}</span>`).join("");
+}
+
+/* ============ NAVIGATION ============ */
+function goCatalog({gender, category}){
+  filters.gender = new Set(gender ? [gender] : []);
+  filters.category = new Set(category ? [category] : []);
+  closeMenu();
+  goView("catalog");
+}
+function goView(next){
+  view = next;
+  window.scrollTo(0,0);
+  render();
+}
+
+/* ============ RENDER: HOME ============ */
+function renderHome(){
+  return `
+    <button class="hero" onclick="goCatalog({gender:'Mujer'})" style="background-color:var(--olive)">
+      <div class="hero-content">
+        <span class="hero-sub">Nueva selección</span>
+        <span class="hero-label">Mujer</span>
+        <span class="hero-cta">Ver colección</span>
+      </div>
+    </button>
+    <button class="hero flip" onclick="goCatalog({gender:'Hombre'})" style="background-color:var(--denim)">
+      <div class="hero-content">
+        <span class="hero-sub">Nueva selección</span>
+        <span class="hero-label">Hombre</span>
+        <span class="hero-cta">Ver colección</span>
+      </div>
+    </button>
+
+    <div class="section-head">
+      <h2>Destacado</h2>
+      <p>Lo último que llegó a la tienda.</p>
+    </div>
+    <div class="grid">${FEATURED.map(productCardHTML).join("")}</div>
+
+    <div class="vermas-wrap">
+      <button class="btn-pill" onclick="goCatalog({})">Ver más</button>
+    </div>
+
+    <footer>
+      <p class="foot-logo">CRUDO</p>
+      <p class="foot-label">Nuestras redes</p>
+      <div class="social-row">
+        <div class="social-sq">IG</div>
+        <div class="social-sq">FB</div>
+        <div class="social-sq">TT</div>
+      </div>
+      <div class="legal-list">${LEGAL_LINKS.map(l => `<span>${l}</span>`).join("")}</div>
+    </footer>
+  `;
+}
+
+/* ============ RENDER: CATALOG ============ */
+function catalogResults(){
+  return PRODUCTS.filter(p => {
+    const gOk = filters.gender.size === 0 || filters.gender.has(p.gender);
+    const cOk = filters.category.size === 0 || filters.category.has(p.category);
+    return gOk && cOk;
+  });
+}
+function renderCatalog(){
+  return `
+    <div class="catalog-wrap">
+      <div class="catalog-top">
+        <span class="count" id="catalog-count"></span>
+        <button class="filter-toggle" onclick="toggleFilters()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="#211F1A" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Filtros
+        </button>
+      </div>
+      <div class="catalog-body">
+        <aside class="filters" id="catalog-filters">
+          <p class="filter-title">Género</p>
+          <div class="filter-list">${GENDERS.map(g => `
+            <label><input type="checkbox" data-type="gender" data-value="${g}" onchange="toggleFilter('gender','${g}')" ${filters.gender.has(g)?"checked":""}/>${g}</label>`).join("")}
+          </div>
+          <p class="filter-title">Prenda</p>
+          <div class="filter-list">${CATEGORIES.map(c => `
+            <label><input type="checkbox" data-type="category" data-value="${c}" onchange="toggleFilter('category','${c}')" ${filters.category.has(c)?"checked":""}/>${c}</label>`).join("")}
+          </div>
+          <button class="clear-filters" id="clear-filters-btn" onclick="clearFilters()">Limpiar filtros</button>
+        </aside>
+        <div class="catalog-results" id="catalog-results"></div>
+      </div>
+    </div>
+  `;
+}
+function toggleFilters(){
+  filtersVisible = !filtersVisible;
+  document.getElementById("catalog-filters").classList.toggle("hidden", !filtersVisible);
+}
+function toggleFilter(type, value){
+  const set = filters[type];
+  set.has(value) ? set.delete(value) : set.add(value);
+  updateCatalogResults();
+}
+function clearFilters(){
+  filters.gender = new Set();
+  filters.category = new Set();
+  goView("catalog");
+}
+function updateCatalogResults(){
+  const results = catalogResults();
+  document.getElementById("catalog-count").textContent = `${results.length} ${results.length===1?"prenda":"prendas"}`;
+  const activeCount = filters.gender.size + filters.category.size;
+  document.getElementById("clear-filters-btn").style.display = activeCount > 0 ? "inline" : "none";
+  const resultsEl = document.getElementById("catalog-results");
+  resultsEl.innerHTML = results.length === 0
+    ? `<p class="empty-msg">No encontramos prendas con esos filtros.</p>`
+    : `<div class="grid" style="padding:0;">${results.map(productCardHTML).join("")}</div>`;
+}
+
+/* ============ RENDER: CHECKOUT ============ */
+function renderCheckout(){
+  const container = document.getElementById("main-content");
+  const items = cartItemsArray();
+  const subtotal = cartSubtotal();
+
+  if(view !== "checkout") return;
+
+  const existingDone = document.getElementById("checkout-done-view");
+  if(existingDone) return; // stay on confirmation screen
+
+  container.innerHTML = `
+    <div class="checkout-wrap" id="checkout-form-view">
+      <div class="checkout-body">
+        <form class="checkout-form" id="checkout-form">
+          <h3>Datos de envío</h3>
+          <label class="field"><span>Nombre y apellido</span><input required type="text"/></label>
+          <label class="field"><span>Email</span><input required type="email"/></label>
+          <label class="field"><span>Dirección</span><input required type="text"/></label>
+          <label class="field"><span>Ciudad</span><input required type="text"/></label>
+          <label class="field"><span>Código postal</span><input required type="text"/></label>
+
+          <h3>Medio de pago</h3>
+          <div class="radio-row">
+            <label><input type="radio" name="pago" checked/>Tarjeta de crédito o débito</label>
+            <label><input type="radio" name="pago"/>Transferencia bancaria</label>
           </div>
 
-          <button
-            type="submit"
-            disabled={items.length === 0}
-            className="mt-5 w-full py-3 rounded-full"
-            style={{
-              fontFamily: sans,
-              backgroundColor: items.length === 0 ? C.line : C.olive,
-              color: items.length === 0 ? C.inkSoft : C.paper,
-              fontWeight: 600,
-            }}
-          >
-            Confirmar compra
-          </button>
+          <button type="submit" class="btn-pill" style="margin-top:20px;width:100%;" ${items.length===0?"disabled":""}>Confirmar compra</button>
         </form>
 
-        <div className="sm:w-72 shrink-0">
-          <div className="rounded-lg p-4" style={{ backgroundColor: C.card, border: `1px solid ${C.line}` }}>
-            <p style={{ fontFamily: serif, color: C.ink }} className="text-lg mb-3">
-              Tu pedido
-            </p>
-            {items.length === 0 ? (
-              <p style={{ fontFamily: sans, color: C.inkSoft }} className="text-sm">
-                No hay prendas en el carrito.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-3 mb-4">
-                {items.map(({ p, qty }) => (
-                  <div key={p.id} className="flex justify-between text-sm gap-2">
-                    <span style={{ fontFamily: sans, color: C.ink }}>
-                      {p.name} <span style={{ color: C.inkSoft }}>x{qty}</span>
-                    </span>
-                    <span style={{ fontFamily: sans, color: C.ink }} className="shrink-0">
-                      {money(p.price * qty)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="border-t pt-3 flex flex-col gap-1.5" style={{ borderColor: C.line }}>
-              <div className="flex justify-between text-sm">
-                <span style={{ fontFamily: sans, color: C.inkSoft }}>Subtotal</span>
-                <span style={{ fontFamily: sans, color: C.ink }}>{money(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span style={{ fontFamily: sans, color: C.inkSoft }}>Envío</span>
-                <span style={{ fontFamily: sans, color: C.ink }}>Gratis</span>
-              </div>
-              <div className="flex justify-between text-base font-bold pt-1">
-                <span style={{ fontFamily: sans, color: C.ink }}>Total</span>
-                <span style={{ fontFamily: sans, color: C.ink }}>{money(total)}</span>
-              </div>
+        <div class="checkout-summary">
+          <div class="summary-card">
+            <h4>Tu pedido</h4>
+            ${items.length === 0
+              ? `<p style="color:var(--ink-soft);font-size:14px;">No hay prendas en el carrito.</p>`
+              : items.map(({p,qty}) => `
+                <div class="summary-line">
+                  <span>${p.name} <span class="muted">x${qty}</span></span>
+                  <span>${money(p.price*qty)}</span>
+                </div>`).join("")
+            }
+            <div class="summary-total">
+              <div class="row"><span class="muted">Subtotal</span><span>${money(subtotal)}</span></div>
+              <div class="row"><span class="muted">Envío</span><span>Gratis</span></div>
+              <div class="row big"><span>Total</span><span>${money(subtotal)}</span></div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  `;
+
+  document.getElementById("checkout-form").onsubmit = (e) => {
+    e.preventDefault();
+    container.innerHTML = `
+      <div class="checkout-done" id="checkout-done-view">
+        <div class="done-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M8 4 4 7v3h2v9h12v-9h2V7l-4-3-2 2h-4L8 4Z" stroke="#EFF0E9" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        </div>
+        <h2>Compra confirmada</h2>
+        <p>Te enviamos un correo con el detalle del pedido.</p>
+        <button class="btn-pill" onclick="cart={};refreshCartUI();goView('home')">Volver a la tienda</button>
+      </div>
+    `;
+  };
 }
 
-/* ---------------------------------------------------------
-   APP
---------------------------------------------------------- */
-export default function App() {
-  const [view, setView] = useState("home"); // home | catalog | checkout
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [cart, setCart] = useState({}); // id -> qty
-  const [filters, setFilters] = useState({ gender: new Set(), category: new Set() });
+/* ============ MASTER RENDER ============ */
+function render(){
+  const main = document.getElementById("main-content");
+  const sub = document.getElementById("subheader");
+  const subTitle = document.getElementById("subheader-title");
+  const titles = { catalog:"Catálogo", checkout:"Finalizar compra" };
 
-  const addToCart = (id) => {
-    setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 }));
-  };
-  const changeQty = (id, delta) => {
-    setCart((c) => {
-      const next = { ...c, [id]: (c[id] || 0) + delta };
-      if (next[id] <= 0) delete next[id];
-      return next;
-    });
-  };
-  const removeFromCart = (id) => {
-    setCart((c) => {
-      const next = { ...c };
-      delete next[id];
-      return next;
-    });
-  };
-
-  const cartItems = useMemo(
-    () =>
-      Object.entries(cart)
-        .map(([id, qty]) => ({ p: PRODUCTS.find((p) => p.id === Number(id)), qty }))
-        .filter((x) => x.p),
-    [cart]
-  );
-  const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
-  const subtotal = cartItems.reduce((s, i) => s + i.p.price * i.qty, 0);
-
-  const goCatalog = ({ gender, category }) => {
-    setFilters({
-      gender: new Set(gender ? [gender] : []),
-      category: new Set(category ? [category] : []),
-    });
-    setView("catalog");
-    setMenuOpen(false);
-    window.scrollTo(0, 0);
-  };
-
-  const titles = { catalog: "Catálogo", checkout: "Finalizar compra" };
-
-  return (
-    <div style={{ backgroundColor: C.paper, minHeight: "100vh" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        input[type="checkbox"], input[type="radio"] { accent-color: ${C.olive}; }
-        .hover-add { transition: opacity 0.2s ease; }
-        @media (hover: hover) and (pointer: fine) {
-          .group:hover .hover-add { opacity: 1 !important; }
-        }
-      `}</style>
-
-      <Header
-        onMenu={() => setMenuOpen(true)}
-        onCart={() => setCartOpen(true)}
-        cartCount={cartCount}
-        view={view}
-        onBack={() => setView(view === "checkout" ? "catalog" : "home")}
-        title={titles[view]}
-      />
-
-      {view === "home" && <Home onAdd={addToCart} goCatalog={goCatalog} />}
-      {view === "catalog" && (
-        <Catalog onAdd={addToCart} filters={filters} setFilters={setFilters} />
-      )}
-      {view === "checkout" && (
-        <Checkout items={cartItems} subtotal={subtotal} onDone={() => setView("home")} />
-      )}
-
-      <MenuDrawer
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        onPickGender={(g) => goCatalog({ gender: g })}
-        onPickCategory={(c) => goCatalog({ category: c })}
-      />
-
-      <CartDrawer
-        open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        items={cartItems}
-        onQty={changeQty}
-        onRemove={removeFromCart}
-        subtotal={subtotal}
-        onCheckout={() => {
-          setCartOpen(false);
-          setView("checkout");
-          window.scrollTo(0, 0);
-        }}
-      />
-    </div>
-  );
+  if(view === "home"){
+    sub.classList.remove("show");
+    main.innerHTML = renderHome();
+  } else if(view === "catalog"){
+    sub.classList.add("show");
+    subTitle.textContent = titles.catalog;
+    main.innerHTML = renderCatalog();
+    document.getElementById("catalog-filters").classList.toggle("hidden", !filtersVisible);
+    updateCatalogResults();
+  } else if(view === "checkout"){
+    sub.classList.add("show");
+    subTitle.textContent = titles.checkout;
+    main.innerHTML = "";
+    renderCheckout();
+  }
 }
+
+/* ============ INIT ============ */
+renderMenuLists();
+render();
+refreshCartUI();
+</script>
+</body>
+</html>
