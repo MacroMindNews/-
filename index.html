@@ -2,350 +2,542 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zenfy - Finanzas Personales</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <link rel="manifest" href="manifest.json">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOMBRE - Tienda de Ropa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #5ED4A4;
-            --bg: #F0F4F8;
-            --text: #1A1C1E;
-            --gray: #6C757D;
-            --white: #ffffff;
-            --danger: #FF6B6B;
+        /* --- ESTILOS GENERALES --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            background-color: #fcfcfc;
+            color: #1a1a1a;
         }
 
-        /* HEADER SEGÚN TU PEDIDO */
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* --- HEADER --- */
         header {
-            padding: 15px;
-            background: var(--white);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 15px 20px;
+            background-color: #c9d5df;
+            position: sticky;
+            top: 0;
             z-index: 100;
         }
 
-        header h1 { font-size: 20px; font-weight: 800; position: absolute; left: 50%; transform: translateX(-50%); }
-        
-        .header-icon { width: 28px; height: 28px; cursor: pointer; object-fit: contain; }
-        .header-right { display: flex; gap: 15px; align-items: center; }
-
-        /* CONTENEDOR DE VISTAS */
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            padding-bottom: 100px;
-        }
-
-        .view { display: none; width: 100%; }
-        .view.active { display: block; animation: fadeIn 0.3s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .card {
-            background: var(--white);
-            padding: 25px;
-            border-radius: 24px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .balance-label { color: var(--gray); font-size: 14px; margin-bottom: 8px; }
-        .balance-amount { font-size: 32px; font-weight: 800; color: var(--primary); }
-
-        /* BARRA INFERIOR (5 BOTONES) */
-        .nav-bar {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: var(--white);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0 25px;
-            border-top: 1px solid #EEE;
-            z-index: 1000;
-        }
-
-        .nav-item {
+        .header-btn {
             background: none;
             border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #1a1a1a;
+        }
+
+        .brand-name {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        /* --- BANNERS MUJER / HOMBRE --- */
+        .banner-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            color: var(--gray);
-            font-size: 10px;
-            flex: 1;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .banner-card {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            border-radius: 4px;
             cursor: pointer;
         }
 
-        .nav-item.active { color: var(--primary); font-weight: bold; }
-        
-        .nav-img {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 4px;
-            transition: 0.2s;
+        .banner-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
         }
 
-        .nav-item:not(.active) .nav-img { filter: grayscale(1); opacity: 0.5; }
-        .nav-item.special .nav-img { transform: scale(1.2); filter: none; opacity: 1; }
+        .banner-card:hover img {
+            transform: scale(1.03);
+        }
 
-        /* MODAL */
-        .modal-overlay {
+        .banner-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Times New Roman', serif;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #1a1a1a;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 6px 24px;
+            border-radius: 2px;
+        }
+
+        /* --- SECCIÓN DESTACADOS --- */
+        .section-title {
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 2rem;
+            margin: 30px 0 20px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 0 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .product-card {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 3/4;
+            background-color: #e5e5e5;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .product-price {
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        /* --- BOTÓN VER MÁS --- */
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 35px 0 45px;
+        }
+
+        .btn-ver-mas {
+            background-color: #c9d5df;
+            color: #111;
+            padding: 12px 36px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-ver-mas:hover {
+            background-color: #b3c2ce;
+        }
+
+        /* --- MENÚ LATERAL (DRAWER) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 300px;
+            height: 100%;
+            background-color: #ffffff;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 200;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .close-sidebar-btn {
+            align-self: flex-end;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 1rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-section ul {
+            list-style: none;
+        }
+
+        .sidebar-section ul li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-section ul li a {
+            font-size: 0.9rem;
+            color: #444;
+            transition: color 0.2s;
+        }
+
+        .sidebar-section ul li a:hover {
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* --- MODAL CARRITO --- */
+        .cart-dropdown {
+            display: none;
+            position: fixed;
+            top: 65px;
+            right: 15px;
+            width: 320px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border: 1px solid #eee;
+            border-radius: 6px;
+            z-index: 150;
+            padding: 15px;
+        }
+
+        .cart-dropdown.active {
+            display: block;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cart-item img {
+            width: 45px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 3px;
+        }
+
+        .cart-item-info {
+            flex-grow: 1;
+            font-size: 0.85rem;
+        }
+
+        .cart-item-name {
+            font-weight: bold;
+        }
+
+        .cart-item-price {
+            color: #666;
+        }
+
+        .cart-total {
+            font-size: 0.95rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0 10px;
+        }
+
+        .btn-checkout {
+            display: block;
+            width: 100%;
+            background-color: #c9d5df;
+            text-align: center;
+            padding: 10px 0;
+            color: #111;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-checkout:hover {
+            background-color: #b3c2ce;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            background-color: #c9d5df;
+            padding: 30px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .footer-left .brand-name {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .social-box {
+            width: 25px;
+            height: 25px;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            text-decoration: none;
+        }
+
+        .footer-right ul {
+            list-style: none;
+        }
+
+        .footer-right ul li {
+            margin-bottom: 6px;
+        }
+
+        .footer-right ul li a {
+            font-size: 0.8rem;
+            color: #333;
+        }
+
+        /* Overlay para Menú */
+        .overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 2000;
-            align-items: flex-end;
+            background: rgba(0,0,0,0.4);
+            z-index: 180;
         }
 
-        .modal-content {
-            background: white;
-            width: 100%;
-            border-radius: 30px 30px 0 0;
-            padding: 30px 20px;
-            max-height: 90vh;
-            overflow-y: auto;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
+        .overlay.active {
+            display: block;
         }
 
-        .modal-overlay.active { display: flex; }
-        .modal-overlay.active .modal-content { transform: translateY(0); }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 14px;
-            margin: 10px 0;
-            border: 1.5px solid #F0F2F5;
-            border-radius: 14px;
-            background: #F8FAFC;
-            font-size: 16px;
-        }
-
-        .btn-save {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            width: 100%;
-            font-weight: bold;
-            font-size: 16px;
-            margin-top: 10px;
+        /* Adaptabilidad en pantallas chicas */
+        @media (max-width: 600px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 columnas en móviles para mejor visual */
+            }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <img src="img/perfil.png" class="header-icon" onclick="changeView('perfil')">
-        <h1>Zenfy</h1>
-        <div class="header-right">
-            <img src="img/notificaciones.png" class="header-icon" onclick="changeView('notificaciones')">
-            <img src="img/mas.png" class="header-icon" onclick="openModal()">
+    <div class="overlay" id="overlay" onclick="closeAllDrawers()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <button class="close-sidebar-btn" onclick="toggleSidebar()">&times;</button>
+        
+        <div class="sidebar-section">
+            <h3>Prendas</h3>
+            <ul>
+                <li><a href="catalogo.html?cat=camisas">Camisas</a></li>
+                <li><a href="catalogo.html?cat=pantalones">Pantalones</a></li>
+                <li><a href="catalogo.html?cat=abrigos">Abrigos y Sweaters</a></li>
+                <li><a href="catalogo.html?cat=vestidos">Vestidos</a></li>
+                <li><a href="catalogo.html?cat=remeras">Remeras y Tops</a></li>
+            </ul>
         </div>
+
+        <div class="sidebar-section">
+            <h3>Género</h3>
+            <ul>
+                <li><a href="catalogo.html?gen=mujer">Mujer</a></li>
+                <li><a href="catalogo.html?gen=hombre">Hombre</a></li>
+                <li><a href="catalogo.html?gen=unisex">Unisex</a></li>
+                <li><a href="catalogo.html?gen=ninos">Niños</a></li>
+                <li><a href="catalogo.html?gen=jovenes">Jóvenes</a></li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>Legal</h3>
+            <ul>
+                <li><a href="politicas-privacidad.html">Políticas de Privacidad</a></li>
+                <li><a href="terminos-servicio.html">Términos del Servicio</a></li>
+                <li><a href="politicas-devolucion.html">Políticas de Devolución</a></li>
+                <li><a href="contacto.html">Contacto</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header>
+        <button class="header-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="brand-name">NOMBRE</div>
+        <button class="header-btn" onclick="toggleCart()">
+            <i class="fa-solid fa-cart-shopping"></i>
+        </button>
     </header>
 
-    <main class="main-content">
-        <section id="view-inicio" class="view active">
-            <div class="card">
-                <p class="balance-label">Balance Total</p>
-                <div id="display-balance" class="balance-amount">$0,00</div>
+    <div class="cart-dropdown" id="cartDropdown">
+        <div class="cart-item">
+            <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=100" alt="Prenda">
+            <div class="cart-item-info">
+                <div class="cart-item-name">Jersey de Lana Merino</div>
+                <div class="cart-item-price">$85.00 x 1</div>
             </div>
-            <div class="card">
-                <canvas id="chartGeneral"></canvas>
-            </div>
-        </section>
-
-        <section id="view-transacciones" class="view">
-            <div class="card"><h2>Actividad</h2><div id="list-mots"></div></div>
-        </section>
-
-        <section id="view-gastosfijos" class="view">
-            <div class="card"><h2>Gastos Fijos</h2></div>
-        </section>
-
-        <section id="view-otros" class="view">
-            <div class="card"><h2>Más Opciones</h2></div>
-        </section>
-
-        <section id="view-notificaciones" class="view">
-            <div class="card"><h2>Alertas</h2></div>
-        </section>
-
-        <section id="view-perfil" class="view">
-            <div class="card"><h2>Mi Cuenta</h2></div>
-        </section>
-    </main>
-    <div class="modal-overlay" id="modal-add">
-        <div class="modal-content">
-            <h2 style="margin-bottom: 20px;">Nuevo Movimiento</h2>
-            
-            <label>Tipo</label>
-            <select id="reg-tipo" onchange="toggleCategories()">
-                <option value="gasto">Gasto</option>
-                <option value="ingreso">Ingreso</option>
-            </select>
-
-            <label>Monto</label>
-            <input type="number" id="reg-monto" placeholder="0.00" inputmode="decimal">
-
-            <label>Categoría</label>
-            <select id="reg-cat"></select>
-
-            <label>Cuenta</label>
-            <select id="reg-cuenta">
-                <option value="Efectivo">Efectivo</option>
-                <option value="Banco">Banco / Transferencia</option>
-                <option value="Billetera Virtual">Billetera Virtual</option>
-            </select>
-
-            <label>Fecha y Hora</label>
-            <input type="datetime-local" id="reg-fecha">
-
-            <label>Descripción</label>
-            <textarea id="reg-desc" placeholder="Opcional..."></textarea>
-
-            <label>Comprobante</label>
-            <input type="file" id="reg-file" accept="image/*">
-
-            <button class="btn-save" onclick="handleSave()">Guardar</button>
-            <button onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:15px; color:var(--gray);">Cancelar</button>
         </div>
+        <div class="cart-item">
+            <img src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=100" alt="Prenda">
+            <div class="cart-item-info">
+                <div class="cart-item-name">Pantalón Cargo Lino</div>
+                <div class="cart-item-price">$75.00 x 1</div>
+            </div>
+        </div>
+        <div class="cart-total">
+            <span>Subtotal:</span>
+            <span>$160.00</span>
+        </div>
+        <a href="checkout.html" class="btn-checkout">FINALIZAR COMPRA</a>
     </div>
 
-    <nav class="nav-bar">
-        <button class="nav-item active" onclick="changeView('inicio', this)">
-            <img src="img/inicio.png" class="nav-img"><span>Inicio</span>
-        </button>
-        <button class="nav-item" onclick="changeView('transacciones', this)">
-            <img src="img/transacciones.png" class="nav-img"><span>Transacciones</span>
-        </button>
-        <button class="nav-item special" onclick="openModal()">
-            <img src="img/mas.png" class="nav-img"><span>Nuevo</span>
-        </button>
-        <button class="nav-item" onclick="changeView('gastosfijos', this)">
-            <img src="img/gastosfijos.png" class="nav-img"><span>Gastos Fijos</span>
-        </button>
-        <button class="nav-item" onclick="changeView('otros', this)">
-            <img src="img/otros.png" class="nav-img"><span>Otros</span>
-        </button>
-    </nav>
+    <section class="banner-container">
+        <a href="catalogo.html?gen=mujer" class="banner-card">
+            <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800" alt="Ropa Mujer">
+            <span class="banner-title">Mujer</span>
+        </a>
+        <a href="catalogo.html?gen=hombre" class="banner-card">
+            <img src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=800" alt="Ropa Hombre">
+            <span class="banner-title">Hombre</span>
+        </a>
+    </section>
+
+    <main>
+        <h2 class="section-title">Destacado</h2>
+        <div class="product-grid" id="destacadosContainer">
+            </div>
+
+        <div class="btn-container">
+            <a href="catalogo.html" class="btn-ver-mas">VER MÁS</a>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-left">
+            <div class="brand-name">NOMBRE</div>
+            <p style="font-size: 0.8rem; margin-bottom: 8px;">Nuestras redes</p>
+            <div class="social-icons">
+                <a href="#" class="social-box"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" class="social-box"><i class="fa-brands fa-twitter"></i></a>
+                <a href="#" class="social-box"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="social-box"><i class="fa-brands fa-youtube"></i></a>
+            </div>
+        </div>
+        <div class="footer-right">
+            <ul>
+                <li><a href="politicas-privacidad.html">Políticas de Privacidad</a></li>
+                <li><a href="terminos-servicio.html">Políticas de Compra</a></li>
+                <li><a href="politicas-devolucion.html">Políticas de Devolución</a></li>
+                <li><a href="contacto.html">Contacto</a></li>
+            </ul>
+        </div>
+    </footer>
+
     <script>
-        // CONFIGURACIÓN FIREBASE
-        const firebaseConfig = {
-  apiKey: "AIzaSyAoqy82RAz9AbkOGgdio81__5laxJJ0sfw",
-  authDomain: "finanzaspro-718af.firebaseapp.com",
-  projectId: "finanzaspro-718af",
-  storageBucket: "finanzaspro-718af.firebasestorage.app",
-  messagingSenderId: "209667709175",
-  appId: "1:209667709175:web:01468708edbe570302dbf2",
-  measurementId: "G-ST8HSK3GVB"
-};
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        // Array de ejemplo para 18 productos (3 columnas x 6 filas)
+        const sampleProducts = [
+            { name: "Sweater Casual Lana", price: "$85.00", img: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400" },
+            { name: "Vestido Floral Verano", price: "$65.00", img: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400" },
+            { name: "Pantalón Cargo Beige", price: "$75.00", img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400" },
+            { name: "Remera Básica Blanca", price: "$25.00", img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400" },
+            { name: "Buzo Rayado Clásico", price: "$60.00", img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" },
+            { name: "Buzo Oversize Indigo", price: "$80.00", img: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=400" },
+            { name: "Sweater Verde Oliva", price: "$70.00", img: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400" },
+            { name: "Buzo Cuello Redondo", price: "$55.00", img: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400" },
+            { name: "Campera Pana Marrón", price: "$110.00", img: "https://images.unsplash.com/photo-1544441893-675973e31985?w=400" },
+            { name: "Remera Naranja Escote V", price: "$35.00", img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400" },
+            { name: "Vestido Negro Cruzado", price: "$90.00", img: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400" },
+            { name: "Pantalón Chino Arena", price: "$70.00", img: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400" },
+            { name: "Sweater Cuello Redondo", price: "$65.00", img: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400" },
+            { name: "Saco Tweed Gris", price: "$130.00", img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400" },
+            { name: "Remera Verde Militar", price: "$30.00", img: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=400" },
+            { name: "Campera Bomber Marino", price: "$105.00", img: "https://images.unsplash.com/photo-1548883354-7622d03aca27?w=400" },
+            { name: "Bermuda Cargo Urbana", price: "$45.00", img: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400" },
+            { name: "Pantalón Slim Negro", price: "$68.00", img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400" }
+        ];
 
-        // NAVEGACIÓN
-        function changeView(viewId, btn) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
-            
-            if(btn) {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                btn.classList.add('active');
-            }
+        // Cargar productos en la grilla
+        const grid = document.getElementById('destacadosContainer');
+        grid.innerHTML = sampleProducts.map(p => `
+            <article class="product-card">
+                <div class="product-image">
+                    <img src="${p.img}" alt="${p.name}">
+                </div>
+                <h4 class="product-name">${p.name}</h4>
+                <p class="product-price">${p.price}</p>
+            </article>
+        `).join('');
+
+        // Manejo del menú lateral
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            // Cierra el carrito si está abierto
+            document.getElementById('cartDropdown').classList.remove('active');
         }
 
-        // LÓGICA MODAL Y CATEGORÍAS
-        const cats = {
-            ingreso: ["Sueldo", "Regalos", "Inversiones", "Dividendos", "Otros"],
-            gasto: ["Comida", "Compras", "Casa", "Transporte", "Salud", "Ocio", "Servicios"]
-        };
-
-        function toggleCategories() {
-            const tipo = document.getElementById('reg-tipo').value;
-            const select = document.getElementById('reg-cat');
-            select.innerHTML = cats[tipo].map(c => `<option value="${c}">${c}</option>`).join('');
+        // Manejo del carrito desplegable
+        function toggleCart() {
+            const cart = document.getElementById('cartDropdown');
+            cart.classList.toggle('active');
         }
 
-        function openModal() {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('reg-fecha').value = now.toISOString().slice(0,16);
-            toggleCategories();
-            document.getElementById('modal-add').classList.add('active');
-        }
-
-        function closeModal() { document.getElementById('modal-add').classList.remove('active'); }
-
-        async function handleSave() {
-            const data = {
-                tipo: document.getElementById('reg-tipo').value,
-                monto: parseFloat(document.getElementById('reg-monto').value),
-                cat: document.getElementById('reg-cat').value,
-                cuenta: document.getElementById('reg-cuenta').value,
-                fecha: document.getElementById('reg-fecha').value,
-                desc: document.getElementById('reg-desc').value,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            if(!data.monto) return alert("Ingresa un monto");
-
-            try {
-                await db.collection("movimientos").add(data);
-                closeModal();
-                alert("Guardado correctamente");
-            } catch(e) { console.error(e); }
-        }
-
-        // INICIALIZACIÓN GRÁFICO
-        const ctx = document.getElementById('chartGeneral').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
-                datasets: [{
-                    label: 'Gastos',
-                    data: [1200, 1900, 800, 1500, 2200, 3000, 1100],
-                    borderColor: '#5ED4A4',
-                    tension: 0.4,
-                    fill: true,
-                    backgroundColor: 'rgba(94, 212, 164, 0.1)'
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } } }
-        });
-
-        // Registrar Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log(err));
-            });
+        // Cerrar todo al hacer click fuera
+        function closeAllDrawers() {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('cartDropdown').classList.remove('active');
         }
     </script>
 </body>
