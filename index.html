@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>CRUDO</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -90,10 +91,11 @@
 
   /* ---------- PRODUCT GRID ---------- */
   .grid{
-    padding:0 16px; display:grid; grid-template-columns:repeat(3,1fr);
-    gap:24px 12px;
+    padding:0 16px; display:grid; grid-template-columns:repeat(2,1fr);
+    gap:22px 12px;
   }
-  @media(min-width:640px){ .grid{ gap:24px 16px; } }
+  @media(min-width:640px){ .grid{ grid-template-columns:repeat(3,1fr); gap:24px 16px; } }
+  @media(max-width:639px){ .grid-extra{ display:none; } }
 
   .product-card{ display:flex; flex-direction:column; }
   .product-image-frame{
@@ -107,26 +109,13 @@
   .product-image .shirt-icon{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.55;
   }
-  .hover-add{
-    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(33,31,26,0.45); opacity:0; transition:opacity .2s ease;
-  }
-  @media (hover:hover) and (pointer:fine){
-    .hover-add{ display:flex; }
-    .product-card:hover .hover-add{ opacity:1; }
-  }
-  .hover-add span{
-    background:var(--paper); color:var(--ink); font-weight:600; font-size:14px;
-    padding:8px 16px; border-radius:999px;
-  }
   .product-info{ padding-top:8px; }
   .product-name{ font-size:14px; font-weight:500; line-height:1.3; margin:0; }
   .product-price{ font-size:14px; font-weight:700; color:var(--olive-dark); margin:2px 0 0; }
-  .mobile-add{
+  .add-btn{
     display:block; width:100%; margin-top:8px; padding:8px 0; border-radius:999px;
     background:var(--olive); color:var(--paper); font-size:12px; font-weight:600; text-align:center;
   }
-  @media (hover:hover) and (pointer:fine){ .mobile-add{ display:none; } }
 
   /* ---------- VER MAS ---------- */
   .vermas-wrap{ display:flex; justify-content:center; padding:32px 0; }
@@ -138,14 +127,15 @@
 
   /* ---------- FOOTER ---------- */
   footer{ padding:32px 20px; background:var(--card); border-top:1px solid var(--line); }
+  .footer-row{ display:flex; justify-content:space-between; gap:20px; align-items:flex-start; }
   footer .foot-logo{ font-family:'Fraunces',serif; font-size:26px; margin:0 0 16px; }
   footer .foot-label{ color:var(--ink-soft); font-size:12px; margin:0 0 8px; }
-  .social-row{ display:flex; gap:8px; margin-bottom:24px; }
+  .social-row{ display:flex; gap:8px; }
   .social-sq{
     width:34px; height:34px; border-radius:6px; background:var(--ink); color:var(--paper);
     display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
   }
-  .legal-list{ display:flex; flex-direction:column; gap:6px; }
+  .legal-list{ display:flex; flex-direction:column; gap:6px; text-align:right; flex-shrink:0; }
   .legal-list span{ color:var(--ink-soft); font-size:14px; }
 
   /* ---------- PRODUCT DETAIL ---------- */
@@ -199,6 +189,11 @@
   }
   .radio-row{ display:flex; flex-direction:column; gap:8px; }
   .radio-row label{ display:flex; align-items:center; gap:8px; font-size:14px; }
+  .payment-note{
+    background:var(--card); border:1px solid var(--line); border-radius:8px;
+    padding:12px 14px; font-size:13px; color:var(--ink-soft); line-height:1.5;
+  }
+  .payment-note strong{ color:var(--ink); }
   .checkout-summary{ flex-shrink:0; }
   @media(min-width:640px){ .checkout-summary{ width:280px; } }
   .summary-card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
@@ -212,7 +207,17 @@
   .checkout-done{ padding:60px 24px; text-align:center; display:flex; flex-direction:column; align-items:center; }
   .done-icon{ width:56px; height:56px; border-radius:999px; background:var(--olive); display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
   .checkout-done h2{ font-family:'Fraunces',serif; font-size:24px; margin:0 0 8px; }
-  .checkout-done p{ color:var(--ink-soft); font-size:14px; margin:0 0 24px; }
+  .checkout-done p{ color:var(--ink-soft); font-size:14px; margin:0 0 20px; }
+  .bank-info-card{
+    width:100%; max-width:360px; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:16px; margin:4px 0 16px; text-align:left;
+  }
+  .bank-info-title{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 10px; }
+  .bank-row{ display:flex; justify-content:space-between; gap:12px; font-size:13px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .bank-row:last-child{ border-bottom:none; }
+  .bank-row span:first-child{ color:var(--ink-soft); }
+  .bank-row span:last-child{ font-weight:600; text-align:right; }
+  .phone-note{ font-size:13px; color:var(--ink-soft); margin:0 0 24px; max-width:340px; }
 
   /* ---------- DRAWERS ---------- */
   .drawer-overlay{
@@ -274,7 +279,7 @@
     <button class="icon-btn" id="btn-menu" aria-label="Abrir menú">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#211F1A" stroke-width="1.8" stroke-linecap="round"/></svg>
     </button>
-    <span class="logo">CRUDO</span>
+    <button class="logo" id="btn-logo" aria-label="Ir al inicio">CRUDO</button>
     <button class="icon-btn" id="btn-cart" aria-label="Abrir carrito">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12.5a1 1 0 0 1-1 .9H8a1 1 0 0 1-1-.9L6 8Z" stroke="#211F1A" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#211F1A" stroke-width="1.6"/></svg>
       <span class="cart-badge" id="cart-badge" style="display:none;">0</span>
@@ -376,13 +381,30 @@ const PRODUCTS = [
 const FEATURED = PRODUCTS.slice(0,18);
 const LEGAL_LINKS = ["Políticas de Privacidad","Políticas de Cambio","Políticas de Devolución","Contacto"];
 
+// Datos del comercio para transferencia — reemplazar por los reales antes de publicar
+const BANK_INFO = {
+  titular: "Crudo Indumentaria SRL",
+  banco: "Banco Ejemplo",
+  alias: "CRUDO.TIENDA.MP",
+  cbu: "0000003100000000000000",
+};
+const STORE_PHONE = "+54 9 11 0000-0000"; // reemplazar por el teléfono real del comercio
+
+// Configuración de EmailJS para el envío automático del correo de confirmación.
+// Creá una cuenta gratis en https://www.emailjs.com, armá un service + template,
+// y pegá tus IDs acá. Mientras diga "TU_..." el envío se salteá sin romper la compra.
+const EMAILJS_CONFIG = {
+  serviceId: "TU_SERVICE_ID",
+  templateId: "TU_TEMPLATE_ID",
+  publicKey: "TU_PUBLIC_KEY",
+};
+
 /* ============ STATE ============ */
 let view = "home";
 let cart = {};                 // id -> qty
 let filters = { gender:new Set(), category:new Set() };
 let filtersVisible = true;
 let currentProductId = null;
-let previousView = "home";
 
 /* ============ HELPERS ============ */
 const money = n => "$" + n.toLocaleString("es-AR",{maximumFractionDigits:0});
@@ -403,22 +425,53 @@ function cartItemsArray(){
 function cartCount(){ return cartItemsArray().reduce((s,i)=>s+i.qty,0); }
 function cartSubtotal(){ return cartItemsArray().reduce((s,i)=>s+i.p.price*i.qty,0); }
 
+function generateOrderNumber(){
+  return Math.floor(10000 + Math.random()*89999);
+}
+
+async function sendConfirmationEmail(order){
+  if(typeof emailjs === "undefined"){
+    console.warn("EmailJS no cargó (sin conexión a internet). No se pudo enviar el correo.");
+    return;
+  }
+  if(EMAILJS_CONFIG.serviceId.startsWith("TU_")){
+    console.warn("Falta configurar EMAILJS_CONFIG con tus datos reales de EmailJS: el correo automático no se envía todavía.");
+    return;
+  }
+  try{
+    await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+      to_email: order.email,
+      to_name: order.name,
+      order_number: order.number,
+      order_items: order.itemsText,
+      order_total: order.totalText,
+      shipping_address: order.address,
+      shipping_city: order.city,
+      shipping_zip: order.zip,
+      bank_titular: BANK_INFO.titular,
+      bank_banco: BANK_INFO.banco,
+      bank_alias: BANK_INFO.alias,
+      bank_cbu: BANK_INFO.cbu,
+      store_phone: STORE_PHONE,
+    }, EMAILJS_CONFIG.publicKey);
+  }catch(err){
+    console.error("No se pudo enviar el correo de confirmación:", err);
+  }
+}
+
 /* ============ PRODUCT CARD ============ */
-function productCardHTML(p){
+function productCardHTML(p, extraClass){
   return `
-  <div class="product-card">
+  <div class="product-card ${extraClass||""}">
     <div class="product-image-frame" onclick="goProduct(${p.id})" role="button" tabindex="0" aria-label="Ver ${p.name}">
       <div class="product-image" style="background-color:var(--sw-${p.tone})">
         <div class="shirt-icon">${shirtSVG(p.tone)}</div>
-        <button class="hover-add" onclick="event.stopPropagation(); addToCart(${p.id})" aria-label="Agregar ${p.name} al carrito">
-          <span>Agregar al carrito</span>
-        </button>
       </div>
     </div>
     <div class="product-info">
       <p class="product-name">${p.name}</p>
       <p class="product-price">${money(p.price)}</p>
-      <button class="mobile-add" onclick="event.stopPropagation(); addToCart(${p.id})">Agregar al carrito</button>
+      <button class="add-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Agregar al carrito</button>
     </div>
   </div>`;
 }
@@ -499,11 +552,8 @@ document.getElementById("btn-checkout").onclick = () => {
   closeCart();
   goView("checkout");
 };
-document.getElementById("btn-back").onclick = () => {
-  if(view === "checkout") goView("catalog");
-  else if(view === "product") goView(previousView);
-  else goView("home");
-};
+document.getElementById("btn-logo").onclick = () => goView("home");
+document.getElementById("btn-back").onclick = () => window.history.back();
 
 /* ============ MENU DRAWER CONTENT ============ */
 function renderMenuLists(){
@@ -515,22 +565,63 @@ function renderMenuLists(){
     `<span>${l}</span>`).join("");
 }
 
-/* ============ NAVIGATION ============ */
+/* ============ ROUTING (hash-based, con historial real) ============ */
+function serializeFilters(){
+  const params = new URLSearchParams();
+  if(filters.gender.size) params.set("genero", Array.from(filters.gender).join(","));
+  if(filters.category.size) params.set("prenda", Array.from(filters.category).join(","));
+  const qs = params.toString();
+  return qs ? ("?" + qs) : "";
+}
+function parseFiltersFromParams(params){
+  const g = params.get("genero");
+  const c = params.get("prenda");
+  filters.gender = new Set(g ? g.split(",") : []);
+  filters.category = new Set(c ? c.split(",") : []);
+}
+function navigateTo(hash){
+  if(window.location.hash === hash) handleHashChange();
+  else window.location.hash = hash;
+}
 function goCatalog({gender, category}){
   filters.gender = new Set(gender ? [gender] : []);
   filters.category = new Set(category ? [category] : []);
   closeMenu();
-  goView("catalog");
+  navigateTo("#/catalogo" + serializeFilters());
 }
 function goProduct(id){
-  if(view !== "product") previousView = view;
-  currentProductId = id;
-  goView("product");
+  navigateTo("#/producto/" + id);
 }
 function goView(next){
-  view = next;
-  window.scrollTo(0,0);
+  const map = { home:"#/", catalog:"#/catalogo" + serializeFilters(), checkout:"#/checkout" };
+  navigateTo(map[next] || "#/");
+}
+function clearFilters(){
+  filters.gender = new Set();
+  filters.category = new Set();
+  navigateTo("#/catalogo");
+}
+function handleHashChange(){
+  const raw = window.location.hash.slice(1);
+  const clean = raw.startsWith("/") ? raw.slice(1) : raw;
+  const [path, query] = clean.split("?");
+  const params = new URLSearchParams(query || "");
+
+  if(!path){
+    view = "home";
+  } else if(path === "catalogo"){
+    view = "catalog";
+    parseFiltersFromParams(params);
+  } else if(path.startsWith("producto/")){
+    view = "product";
+    currentProductId = Number(path.split("/")[1]);
+  } else if(path === "checkout"){
+    view = "checkout";
+  } else {
+    view = "home";
+  }
   render();
+  window.scrollTo(0,0);
 }
 
 /* ============ RENDER: HOME ============ */
@@ -555,21 +646,25 @@ function renderHome(){
       <h2>Destacado</h2>
       <p>Lo último que llegó a la tienda.</p>
     </div>
-    <div class="grid">${FEATURED.map(productCardHTML).join("")}</div>
+    <div class="grid">${FEATURED.map((p,i) => productCardHTML(p, i >= 14 ? "grid-extra" : "")).join("")}</div>
 
     <div class="vermas-wrap">
       <button class="btn-pill" onclick="goCatalog({})">Ver más</button>
     </div>
 
     <footer>
-      <p class="foot-logo">CRUDO</p>
-      <p class="foot-label">Nuestras redes</p>
-      <div class="social-row">
-        <div class="social-sq">IG</div>
-        <div class="social-sq">FB</div>
-        <div class="social-sq">TT</div>
+      <div class="footer-row">
+        <div class="footer-left">
+          <p class="foot-logo">CRUDO</p>
+          <p class="foot-label">Nuestras redes</p>
+          <div class="social-row">
+            <div class="social-sq">IG</div>
+            <div class="social-sq">FB</div>
+            <div class="social-sq">TT</div>
+          </div>
+        </div>
+        <div class="legal-list">${LEGAL_LINKS.map(l => `<span>${l}</span>`).join("")}</div>
       </div>
-      <div class="legal-list">${LEGAL_LINKS.map(l => `<span>${l}</span>`).join("")}</div>
     </footer>
   `;
 }
@@ -616,12 +711,8 @@ function toggleFilters(){
 function toggleFilter(type, value){
   const set = filters[type];
   set.has(value) ? set.delete(value) : set.add(value);
+  window.history.replaceState(null, "", "#/catalogo" + serializeFilters());
   updateCatalogResults();
-}
-function clearFilters(){
-  filters.gender = new Set();
-  filters.category = new Set();
-  goView("catalog");
 }
 function updateCatalogResults(){
   const results = catalogResults();
@@ -650,16 +741,17 @@ function renderCheckout(){
       <div class="checkout-body">
         <form class="checkout-form" id="checkout-form">
           <h3>Datos de envío</h3>
-          <label class="field"><span>Nombre y apellido</span><input required type="text"/></label>
-          <label class="field"><span>Email</span><input required type="email"/></label>
-          <label class="field"><span>Dirección</span><input required type="text"/></label>
-          <label class="field"><span>Ciudad</span><input required type="text"/></label>
-          <label class="field"><span>Código postal</span><input required type="text"/></label>
+          <label class="field"><span>Nombre y apellido</span><input required name="nombre" type="text"/></label>
+          <label class="field"><span>Email</span><input required name="email" type="email"/></label>
+          <label class="field"><span>Dirección</span><input required name="direccion" type="text"/></label>
+          <label class="field"><span>Ciudad</span><input required name="ciudad" type="text"/></label>
+          <label class="field"><span>Código postal</span><input required name="cp" type="text"/></label>
 
           <h3>Medio de pago</h3>
-          <div class="radio-row">
-            <label><input type="radio" name="pago" checked/>Tarjeta de crédito o débito</label>
-            <label><input type="radio" name="pago"/>Transferencia bancaria</label>
+          <div class="payment-note">
+            <strong>Transferencia bancaria</strong> — por el momento es el único medio de pago disponible.
+            Al confirmar el pedido te enviamos por correo el alias y los datos de la cuenta, y el teléfono
+            del comercio para que nos mandes el comprobante.
           </div>
 
           <button type="submit" class="btn-pill" style="margin-top:20px;width:100%;" ${items.length===0?"disabled":""}>Confirmar compra</button>
@@ -689,16 +781,44 @@ function renderCheckout(){
 
   document.getElementById("checkout-form").onsubmit = (e) => {
     e.preventDefault();
+    if(items.length === 0) return;
+
+    const data = new FormData(e.target);
+    const order = {
+      number: generateOrderNumber(),
+      name: data.get("nombre"),
+      email: data.get("email"),
+      address: data.get("direccion"),
+      city: data.get("ciudad"),
+      zip: data.get("cp"),
+      itemsText: items.map(({p,qty}) => `${p.name} x${qty} — ${money(p.price*qty)}`).join("\n"),
+      totalText: money(subtotal),
+    };
+
+    sendConfirmationEmail(order);
+
     container.innerHTML = `
       <div class="checkout-done" id="checkout-done-view">
         <div class="done-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M8 4 4 7v3h2v9h12v-9h2V7l-4-3-2 2h-4L8 4Z" stroke="#EFF0E9" stroke-width="1.2" stroke-linejoin="round"/></svg>
         </div>
         <h2>Compra confirmada</h2>
-        <p>Te enviamos un correo con el detalle del pedido.</p>
-        <button class="btn-pill" onclick="cart={};refreshCartUI();goView('home')">Volver a la tienda</button>
+        <p>Pedido #${order.number} · Te enviamos un correo a ${order.email} con este detalle.</p>
+        <div class="bank-info-card">
+          <p class="bank-info-title">Datos para transferir</p>
+          <div class="bank-row"><span>Titular</span><span>${BANK_INFO.titular}</span></div>
+          <div class="bank-row"><span>Banco</span><span>${BANK_INFO.banco}</span></div>
+          <div class="bank-row"><span>Alias</span><span>${BANK_INFO.alias}</span></div>
+          <div class="bank-row"><span>CBU</span><span>${BANK_INFO.cbu}</span></div>
+          <div class="bank-row"><span>Total a transferir</span><span>${order.totalText}</span></div>
+        </div>
+        <p class="phone-note">Una vez hecha la transferencia, mandanos el comprobante al ${STORE_PHONE}.</p>
+        <button class="btn-pill" onclick="goView('home')">Volver a la tienda</button>
       </div>
     `;
+
+    cart = {};
+    refreshCartUI();
   };
 }
 
@@ -757,7 +877,8 @@ function render(){
 
 /* ============ INIT ============ */
 renderMenuLists();
-render();
+window.addEventListener("hashchange", handleHashChange);
+handleHashChange();
 refreshCartUI();
 </script>
 </body>
