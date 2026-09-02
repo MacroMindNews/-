@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CRUDO — Admin</title>
+<title>Administrador</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -167,11 +167,11 @@
       MENÚ
     </button>
     <div class="menu-dropdown" id="menu-dropdown">
-      <a href="tienda-crudo.html">Ver tienda</a>
+      <a href="index.html">Ver tienda</a>
       <button id="btn-logout-menu">Cerrar sesión</button>
     </div>
   </div>
-  <span class="logo">CRUDO</span>
+  <span class="logo">NOMBRE</span>
   <span style="width:70px;"></span>
 </header>
 
@@ -293,7 +293,7 @@ const storage = firebase.storage();
 
 /* ============ DATA ============ */
 const CATEGORIES = ["Camperas","Sweaters","Camisas","Pantalones","Vestidos","Faldas","Blazers","Remeras","Shorts","Buzos","Chalecos"];
-const GENDERS = ["Mujer","Hombre","Unisex","Niños","Jóvenes"];
+const GENDERS = ["Mujer","Hombre","Unisex"];
 const SIZES = ["S","M","L","XL","XXL"];
 const COLORS = [
   {name:"Negro", hex:"#1B1B18"},
