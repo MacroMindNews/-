@@ -305,6 +305,39 @@ const COLORS = [
 
 const money = n => "$" + Number(n||0).toLocaleString("es-AR",{maximumFractionDigits:0});
 
+/* ============ COMPRESIÓN DE FOTOS ============ */
+// Achica y comprime la imagen en el navegador antes de subirla, para que la subida sea rápida
+// aunque la foto original venga pesada (por ejemplo, sacada con la cámara del celular).
+function resizeImage(file, maxDim = 1600, quality = 0.82){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("No se pudo procesar la imagen"));
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > height && width > maxDim){
+          height = Math.round(height * (maxDim / width));
+          width = maxDim;
+        } else if(height > maxDim){
+          width = Math.round(width * (maxDim / height));
+          height = maxDim;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          blob ? resolve(blob) : reject(new Error("No se pudo comprimir la imagen"));
+        }, "image/jpeg", quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ============ LOGIN ============ */
 const loginView = document.getElementById("login-view");
 const adminView = document.getElementById("admin-view");
@@ -453,20 +486,28 @@ form.onsubmit = async (e) => {
   if(error){ showMsg(error, false); return; }
 
   publishBtn.disabled = true;
-  publishBtn.textContent = "Publicando…";
   msgEl.className = "form-msg";
 
   try{
     const safeCode = data.codigo.replace(/[\/\s]+/g, "-");
 
-    const urls = [];
-    for(const item of selectedFiles){
-      const path = `productos/${safeCode}/${Date.now()}_${item.file.name}`;
-      const snap = await storage.ref(path).put(item.file);
-      const url = await snap.ref.getDownloadURL();
-      urls.push(url);
-    }
+    publishBtn.textContent = "Optimizando fotos…";
+    const processedPhotos = await Promise.all(selectedFiles.map(item => resizeImage(item.file)));
 
+    let uploadedCount = 0;
+    publishBtn.textContent = `Subiendo fotos… (0/${processedPhotos.length})`;
+    const urls = await Promise.all(processedPhotos.map((blob, i) => {
+      const path = `productos/${safeCode}/${Date.now()}_${i}.jpg`;
+      return storage.ref(path).put(blob, { contentType: "image/jpeg" })
+        .then(snap => snap.ref.getDownloadURL())
+        .then(url => {
+          uploadedCount++;
+          publishBtn.textContent = `Subiendo fotos… (${uploadedCount}/${processedPhotos.length})`;
+          return url;
+        });
+    }));
+
+    publishBtn.textContent = "Guardando…";
     await db.collection("productos").doc(safeCode).set({
       codigo: data.codigo,
       nombre: data.nombre,
