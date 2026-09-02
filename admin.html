@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CRUDO — Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#FFFFFF;
+    --panel:#C9D2DB;
+    --panel-soft:#D7DEE4;
+    --ink:#1B1B18;
+    --ink-soft:#5C5C56;
+    --line:#C9D2DB;
+    --olive:#4E5A38;
+    --red:#C0392B;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'Space Grotesk',sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  button{ font:inherit; border:none; cursor:pointer; }
+  input, textarea, select{ font-family:'Space Grotesk',sans-serif; }
+  .req{ color:var(--red); }
+
+  /* ---------- HEADER ---------- */
+  header{
+    background:var(--panel); display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; position:relative;
+  }
+  .menu-btn{ display:flex; align-items:center; gap:8px; background:none; font-weight:700; letter-spacing:0.04em; font-size:14px; }
+  header .logo{ font-family:'Fraunces',serif; font-size:26px; position:absolute; left:50%; transform:translateX(-50%); }
+  .logout-btn{ background:none; color:var(--ink); font-size:13px; text-decoration:underline; text-underline-offset:3px; }
+  .menu-dropdown{
+    position:absolute; top:100%; left:20px; margin-top:6px; background:#fff; border:1px solid var(--line);
+    border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.08); overflow:hidden; display:none; z-index:10;
+    min-width:180px;
+  }
+  .menu-dropdown.open{ display:block; }
+  .menu-dropdown a, .menu-dropdown button{
+    display:block; width:100%; text-align:left; padding:12px 16px; font-size:14px; color:var(--ink);
+    text-decoration:none; background:none;
+  }
+  .menu-dropdown a:hover, .menu-dropdown button:hover{ background:var(--panel-soft); }
+
+  /* ---------- LOGIN ---------- */
+  #login-view{
+    min-height:calc(100vh - 64px); display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .login-card{ width:100%; max-width:340px; }
+  .login-card h1{ font-family:'Fraunces',serif; font-size:26px; margin:0 0 6px; }
+  .login-card p.sub{ color:var(--ink-soft); font-size:14px; margin:0 0 24px; }
+  .login-card label{ display:block; font-size:14px; margin-bottom:6px; }
+  .login-card input{
+    width:100%; padding:12px 14px; border-radius:6px; border:1px solid var(--line);
+    background:var(--panel-soft); margin-bottom:16px; outline:none; font-size:14px;
+  }
+  .login-card button{
+    width:100%; padding:13px 0; border-radius:6px; background:var(--ink); color:#fff;
+    font-weight:600; font-size:14px;
+  }
+  .login-error{
+    display:none; background:#FBEAE8; color:var(--red); border:1px solid #F0C4BF;
+    border-radius:6px; padding:10px 12px; font-size:13px; margin-bottom:16px;
+  }
+
+  /* ---------- ADMIN LAYOUT ---------- */
+  #admin-view{ display:none; max-width:640px; margin:0 auto; padding:32px 24px 80px; }
+  #admin-view h1{ font-size:26px; font-weight:800; margin:0 0 24px; }
+  .field-group{ margin-bottom:24px; }
+  .field-group > label{ display:block; font-size:16px; margin-bottom:8px; }
+  .field-group input[type="text"],
+  .field-group input[type="number"],
+  .field-group select,
+  .field-group textarea{
+    width:100%; padding:12px 14px; border-radius:4px; border:1px solid var(--line);
+    background:var(--panel-soft); outline:none; font-size:14px; color:var(--ink);
+  }
+  .field-group textarea{ min-height:110px; resize:vertical; font-family:inherit; }
+
+  .toggle-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .toggle-btn{
+    padding:10px 16px; border-radius:4px; background:var(--panel-soft); border:1px solid var(--line);
+    color:var(--ink); font-size:14px;
+  }
+  .toggle-btn.active{ background:var(--olive); border-color:var(--olive); color:#fff; }
+
+  .color-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .color-swatch{
+    width:36px; height:36px; border-radius:4px; border:2px solid transparent; position:relative; cursor:pointer;
+  }
+  .color-swatch.selected{ border-color:var(--ink); }
+  .color-swatch[data-color="Blanco"]{ border-color:#C9D2DB; }
+  .color-swatch[data-color="Blanco"].selected{ border-color:var(--ink); }
+  .color-swatch.multicolor{
+    background:conic-gradient(from 0deg, #E53935, #FDD835, #43A047, #1E88E5, #8E24AA, #E53935);
+  }
+
+  .photo-upload-box{
+    width:100%; min-height:180px; border-radius:6px; background:var(--panel-soft);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    cursor:pointer; border:1px dashed #A9B3BC; text-align:center; padding:20px;
+  }
+  .photo-upload-box span{ font-size:14px; color:var(--ink); }
+  .photo-previews{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; }
+  .photo-thumb{ position:relative; aspect-ratio:3/4; border-radius:6px; overflow:hidden; background:var(--panel-soft); }
+  .photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photo-thumb .remove-photo{
+    position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:999px;
+    background:rgba(27,27,24,0.75); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;
+  }
+
+  .form-actions{ display:flex; gap:12px; margin-top:8px; }
+  .btn-primary{ padding:14px 28px; border-radius:4px; background:var(--panel-soft); color:var(--ink); font-weight:700; }
+  .btn-primary:hover{ background:#BFC9D2; }
+  .btn-secondary{ padding:14px 28px; border-radius:4px; background:var(--panel-soft); color:var(--ink); font-weight:700; }
+  .btn-primary:disabled{ opacity:0.5; cursor:default; }
+
+  .form-msg{ font-size:14px; margin-top:14px; padding:10px 12px; border-radius:6px; display:none; }
+  .form-msg.ok{ background:#E7EFE2; color:var(--olive); display:block; }
+  .form-msg.err{ background:#FBEAE8; color:var(--red); display:block; }
+
+  /* ---------- LISTA DE PUBLICADAS ---------- */
+  .published-section{ margin-top:56px; padding-top:32px; border-top:1px solid var(--line); }
+  .published-section h2{ font-size:20px; margin:0 0 16px; }
+  .published-row{
+    display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);
+  }
+  .published-thumb{ width:44px; height:56px; border-radius:4px; overflow:hidden; background:var(--panel-soft); flex-shrink:0; }
+  .published-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .published-info{ flex:1; min-width:0; }
+  .published-info .name{ font-size:14px; font-weight:600; margin:0; }
+  .published-info .meta{ font-size:12px; color:var(--ink-soft); margin:2px 0 0; }
+  .published-price{ font-size:14px; font-weight:700; white-space:nowrap; }
+  .delete-btn{ background:none; color:var(--red); font-size:13px; text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
+  .empty-msg{ color:var(--ink-soft); font-size:14px; }
+
+  /* ---------- PREVIEW MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(27,27,24,0.5); display:none;
+    align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-card{ background:#fff; border-radius:10px; width:100%; max-width:300px; overflow:hidden; }
+  .modal-card img{ width:100%; aspect-ratio:3/4; object-fit:cover; display:block; background:var(--panel-soft); }
+  .modal-body{ padding:16px; }
+  .modal-body .name{ font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px; }
+  .modal-body .price{ font-weight:700; margin:0 0 8px; }
+  .modal-body .meta{ font-size:12px; color:var(--ink-soft); margin:0 0 12px; }
+  .modal-close{ width:100%; padding:12px 0; background:var(--ink); color:#fff; font-weight:600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="position:relative;">
+    <button class="menu-btn" id="btn-menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#1B1B18" stroke-width="2" stroke-linecap="round"/></svg>
+      MENÚ
+    </button>
+    <div class="menu-dropdown" id="menu-dropdown">
+      <a href="tienda-crudo.html">Ver tienda</a>
+      <button id="btn-logout-menu">Cerrar sesión</button>
+    </div>
+  </div>
+  <span class="logo">CRUDO</span>
+  <span style="width:70px;"></span>
+</header>
+
+<!-- LOGIN -->
+<div id="login-view">
+  <form class="login-card" id="login-form">
+    <h1>Ingresar</h1>
+    <p class="sub">Acceso solo para administradores de la tienda.</p>
+    <div class="login-error" id="login-error">Correo o contraseña incorrectos.</div>
+    <label for="login-email">Correo</label>
+    <input id="login-email" name="email" type="email" required autocomplete="username"/>
+    <label for="login-password">Contraseña</label>
+    <input id="login-password" name="password" type="password" required autocomplete="current-password"/>
+    <button type="submit" id="login-submit">Ingresar</button>
+  </form>
+</div>
+
+<!-- ADMIN -->
+<div id="admin-view">
+  <h1>Publicar</h1>
+  <form id="publish-form">
+    <div class="field-group">
+      <label for="f-codigo">Código<span class="req">*</span></label>
+      <input id="f-codigo" type="text" placeholder="#" required/>
+    </div>
+
+    <div class="field-group">
+      <label for="f-nombre">Nombre<span class="req">*</span></label>
+      <input id="f-nombre" type="text" required/>
+    </div>
+
+    <div class="field-group">
+      <label for="f-marca">Marca<span class="req">*</span></label>
+      <input id="f-marca" type="text" required/>
+    </div>
+
+    <div class="field-group">
+      <label>Género<span class="req">*</span></label>
+      <div class="toggle-row" id="genero-row"></div>
+    </div>
+
+    <div class="field-group">
+      <label for="f-categoria">Categoría<span class="req">*</span></label>
+      <select id="f-categoria" required></select>
+    </div>
+
+    <div class="field-group">
+      <label for="f-precio">Precio<span class="req">*</span></label>
+      <input id="f-precio" type="number" min="0" step="1" placeholder="$" required/>
+    </div>
+
+    <div class="field-group">
+      <label for="f-descripcion">Descripción<span class="req">*</span></label>
+      <textarea id="f-descripcion" required></textarea>
+    </div>
+
+    <div class="field-group">
+      <label>Talles<span class="req">*</span></label>
+      <div class="toggle-row" id="talles-row"></div>
+    </div>
+
+    <div class="field-group">
+      <label>Colores<span class="req">*</span></label>
+      <div class="color-row" id="colores-row"></div>
+    </div>
+
+    <div class="field-group">
+      <label>Fotos<span class="req">*</span></label>
+      <input type="file" id="f-fotos" accept="image/*" multiple hidden/>
+      <div class="photo-upload-box" id="photo-box">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#1B1B18" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Subir</span>
+      </div>
+      <div class="photo-previews" id="photo-previews"></div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" id="publish-btn">Publicar</button>
+      <button type="button" class="btn-secondary" id="preview-btn">Vista previa</button>
+    </div>
+    <div class="form-msg" id="form-msg"></div>
+  </form>
+
+  <div class="published-section">
+    <h2>Prendas publicadas</h2>
+    <div id="published-list"><p class="empty-msg">Cargando…</p></div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal-card">
+    <img id="preview-img" src="" alt="Vista previa"/>
+    <div class="modal-body">
+      <p class="name" id="preview-name">—</p>
+      <p class="price" id="preview-price">$0</p>
+      <p class="meta" id="preview-meta">—</p>
+      <button class="modal-close" id="preview-close">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ FIREBASE ============ */
+// Mismo proyecto que usa tienda-crudo.html. Pegá acá tu configuración
+// (Firebase Console → Configuración del proyecto → Tus apps → Config).
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD2yqysbJOXE3cDJ7yxCX2oDSqqUA5Vh5U",
+  authDomain: "proyecto-1-863c9.firebaseapp.com",
+  projectId: "proyecto-1-863c9",
+  storageBucket: "proyecto-1-863c9.firebasestorage.app",
+  messagingSenderId: "198644297431",
+  appId: "1:198644297431:web:a100cafffdc2517864a92",
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+/* ============ DATA ============ */
+const CATEGORIES = ["Camperas","Sweaters","Camisas","Pantalones","Vestidos","Faldas","Blazers","Remeras","Shorts","Buzos","Chalecos"];
+const GENDERS = ["Mujer","Hombre","Unisex","Niños","Jóvenes"];
+const SIZES = ["S","M","L","XL","XXL"];
+const COLORS = [
+  {name:"Negro", hex:"#1B1B18"},
+  {name:"Blanco", hex:"#FFFFFF"},
+  {name:"Rojo", hex:"#E53935"},
+  {name:"Amarillo", hex:"#FDD835"},
+  {name:"Azul", hex:"#1E3A8A"},
+];
+
+const money = n => "$" + Number(n||0).toLocaleString("es-AR",{maximumFractionDigits:0});
+
+/* ============ LOGIN ============ */
+const loginView = document.getElementById("login-view");
+const adminView = document.getElementById("admin-view");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const loginSubmit = document.getElementById("login-submit");
+
+loginForm.onsubmit = async (e) => {
+  e.preventDefault();
+  loginError.style.display = "none";
+  loginSubmit.textContent = "Ingresando…";
+  loginSubmit.disabled = true;
+  try{
+    await auth.signInWithEmailAndPassword(
+      document.getElementById("login-email").value.trim(),
+      document.getElementById("login-password").value
+    );
+  }catch(err){
+    loginError.style.display = "block";
+    loginSubmit.textContent = "Ingresar";
+    loginSubmit.disabled = false;
+  }
+};
+
+document.getElementById("btn-logout-menu").onclick = () => auth.signOut();
+document.getElementById("btn-menu").onclick = () => document.getElementById("menu-dropdown").classList.toggle("open");
+document.addEventListener("click", (e) => {
+  const dropdown = document.getElementById("menu-dropdown");
+  const btn = document.getElementById("btn-menu");
+  if(dropdown.classList.contains("open") && !dropdown.contains(e.target) && !btn.contains(e.target)){
+    dropdown.classList.remove("open");
+  }
+});
+
+auth.onAuthStateChanged((user) => {
+  if(user){
+    loginView.style.display = "none";
+    adminView.style.display = "block";
+    watchPublishedProducts();
+  } else {
+    loginView.style.display = "flex";
+    adminView.style.display = "none";
+    loginForm.reset();
+    loginSubmit.textContent = "Ingresar";
+    loginSubmit.disabled = false;
+  }
+});
+
+/* ============ FORM SETUP ============ */
+let selectedGender = null;
+let selectedSizes = new Set();
+let selectedColors = new Set();
+let selectedFiles = []; // { file, url }
+
+document.getElementById("genero-row").innerHTML = GENDERS.map(g =>
+  `<button type="button" class="toggle-btn" data-value="${g}" onclick="pickGender('${g}')">${g}</button>`
+).join("");
+
+document.getElementById("f-categoria").innerHTML =
+  `<option value="" disabled selected>Elegí una categoría</option>` +
+  CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
+
+document.getElementById("talles-row").innerHTML = SIZES.map(s =>
+  `<button type="button" class="toggle-btn" data-value="${s}" onclick="toggleSize('${s}')">${s}</button>`
+).join("");
+
+document.getElementById("colores-row").innerHTML =
+  COLORS.map(c => `<div class="color-swatch" data-color="${c.name}" style="background:${c.hex}" title="${c.name}" onclick="toggleColor('${c.name}')"></div>`).join("") +
+  `<div class="color-swatch multicolor" data-color="Multicolor" title="Multicolor" onclick="toggleColor('Multicolor')"></div>`;
+
+function pickGender(g){
+  selectedGender = g;
+  document.querySelectorAll("#genero-row .toggle-btn").forEach(b => b.classList.toggle("active", b.dataset.value === g));
+}
+function toggleSize(s){
+  selectedSizes.has(s) ? selectedSizes.delete(s) : selectedSizes.add(s);
+  document.querySelectorAll("#talles-row .toggle-btn").forEach(b => b.classList.toggle("active", selectedSizes.has(b.dataset.value)));
+}
+function toggleColor(c){
+  selectedColors.has(c) ? selectedColors.delete(c) : selectedColors.add(c);
+  document.querySelectorAll("#colores-row .color-swatch").forEach(el => el.classList.toggle("selected", selectedColors.has(el.dataset.color)));
+}
+
+/* ============ FOTOS ============ */
+const fotosInput = document.getElementById("f-fotos");
+document.getElementById("photo-box").onclick = () => fotosInput.click();
+fotosInput.onchange = () => {
+  Array.from(fotosInput.files).forEach(file => {
+    selectedFiles.push({ file, url: URL.createObjectURL(file) });
+  });
+  fotosInput.value = "";
+  renderPhotoPreviews();
+};
+function renderPhotoPreviews(){
+  document.getElementById("photo-previews").innerHTML = selectedFiles.map((f,i) => `
+    <div class="photo-thumb">
+      <img src="${f.url}" alt="Foto ${i+1}"/>
+      <button type="button" class="remove-photo" onclick="removePhoto(${i})">✕</button>
+    </div>`).join("");
+}
+function removePhoto(i){
+  selectedFiles.splice(i,1);
+  renderPhotoPreviews();
+}
+
+/* ============ VALIDACIÓN Y ENVÍO ============ */
+const form = document.getElementById("publish-form");
+const msgEl = document.getElementById("form-msg");
+const publishBtn = document.getElementById("publish-btn");
+
+function collectFormData(){
+  return {
+    codigo: document.getElementById("f-codigo").value.trim(),
+    nombre: document.getElementById("f-nombre").value.trim(),
+    marca: document.getElementById("f-marca").value.trim(),
+    genero: selectedGender,
+    categoria: document.getElementById("f-categoria").value,
+    precio: Number(document.getElementById("f-precio").value),
+    descripcion: document.getElementById("f-descripcion").value.trim(),
+    talles: Array.from(selectedSizes),
+    colores: Array.from(selectedColors),
+  };
+}
+function validate(data){
+  if(!data.codigo) return "Falta el código.";
+  if(!data.nombre) return "Falta el nombre.";
+  if(!data.marca) return "Falta la marca.";
+  if(!data.genero) return "Elegí un género.";
+  if(!data.categoria) return "Elegí una categoría.";
+  if(!data.precio || data.precio <= 0) return "Ingresá un precio válido.";
+  if(!data.descripcion) return "Falta la descripción.";
+  if(data.talles.length === 0) return "Elegí al menos un talle.";
+  if(data.colores.length === 0) return "Elegí al menos un color.";
+  if(selectedFiles.length === 0) return "Subí al menos una foto.";
+  return null;
+}
+function showMsg(text, ok){
+  msgEl.textContent = text;
+  msgEl.className = "form-msg " + (ok ? "ok" : "err");
+}
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  const data = collectFormData();
+  const error = validate(data);
+  if(error){ showMsg(error, false); return; }
+
+  publishBtn.disabled = true;
+  publishBtn.textContent = "Publicando…";
+  msgEl.className = "form-msg";
+
+  try{
+    const safeCode = data.codigo.replace(/[\/\s]+/g, "-");
+
+    const urls = [];
+    for(const item of selectedFiles){
+      const path = `productos/${safeCode}/${Date.now()}_${item.file.name}`;
+      const snap = await storage.ref(path).put(item.file);
+      const url = await snap.ref.getDownloadURL();
+      urls.push(url);
+    }
+
+    await db.collection("productos").doc(safeCode).set({
+      codigo: data.codigo,
+      nombre: data.nombre,
+      marca: data.marca,
+      genero: data.genero,
+      categoria: data.categoria,
+      precio: data.precio,
+      descripcion: data.descripcion,
+      talles: data.talles,
+      colores: data.colores,
+      fotos: urls,
+      creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    showMsg("Prenda publicada correctamente.", true);
+    resetForm();
+  }catch(err){
+    console.error(err);
+    showMsg("Ocurrió un error al publicar. Revisá la consola.", false);
+  }finally{
+    publishBtn.disabled = false;
+    publishBtn.textContent = "Publicar";
+  }
+};
+
+function resetForm(){
+  form.reset();
+  selectedGender = null;
+  selectedSizes = new Set();
+  selectedColors = new Set();
+  selectedFiles = [];
+  document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".color-swatch").forEach(el => el.classList.remove("selected"));
+  renderPhotoPreviews();
+}
+
+/* ============ VISTA PREVIA ============ */
+document.getElementById("preview-btn").onclick = () => {
+  const data = collectFormData();
+  document.getElementById("preview-img").src = selectedFiles[0] ? selectedFiles[0].url : "";
+  document.getElementById("preview-name").textContent = data.nombre || "Nombre de la prenda";
+  document.getElementById("preview-price").textContent = money(data.precio);
+  document.getElementById("preview-meta").textContent =
+    [data.genero, data.categoria].filter(Boolean).join(" · ") || "Género · Categoría";
+  document.getElementById("preview-modal").classList.add("open");
+};
+document.getElementById("preview-close").onclick = () => document.getElementById("preview-modal").classList.remove("open");
+document.getElementById("preview-modal").onclick = (e) => {
+  if(e.target.id === "preview-modal") e.currentTarget.classList.remove("open");
+};
+
+/* ============ PRENDAS PUBLICADAS ============ */
+function watchPublishedProducts(){
+  db.collection("productos").orderBy("creadoEn","desc").onSnapshot((snap) => {
+    const list = document.getElementById("published-list");
+    if(snap.empty){
+      list.innerHTML = `<p class="empty-msg">Todavía no publicaste ninguna prenda.</p>`;
+      return;
+    }
+    list.innerHTML = snap.docs.map((doc) => {
+      const d = doc.data();
+      const thumb = (d.fotos && d.fotos[0]) || "";
+      return `
+        <div class="published-row">
+          <div class="published-thumb">${thumb ? `<img src="${thumb}" alt="${d.nombre}"/>` : ""}</div>
+          <div class="published-info">
+            <p class="name">${d.nombre || "(sin nombre)"}</p>
+            <p class="meta">${d.genero || ""} · ${d.categoria || ""}</p>
+          </div>
+          <span class="published-price">${money(d.precio)}</span>
+          <button type="button" class="delete-btn" onclick="deleteProduct('${doc.id}')">Eliminar</button>
+        </div>`;
+    }).join("");
+  }, (err) => {
+    console.error(err);
+    document.getElementById("published-list").innerHTML = `<p class="empty-msg">No se pudo cargar la lista.</p>`;
+  });
+}
+
+async function deleteProduct(id){
+  if(!confirm("¿Eliminar esta prenda? Esta acción no se puede deshacer.")) return;
+  try{
+    const doc = await db.collection("productos").doc(id).get();
+    const data = doc.data();
+    if(data && data.fotos){
+      for(const url of data.fotos){
+        try{ await storage.refFromURL(url).delete(); }catch(e){ /* la foto ya pudo haberse borrado */ }
+      }
+    }
+    await db.collection("productos").doc(id).delete();
+  }catch(err){
+    console.error(err);
+    alert("No se pudo eliminar la prenda.");
+  }
+}
+</script>
+</body>
+</html>
