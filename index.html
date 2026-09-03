@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NOMBRE</title>
+<title>CRUDO</title>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -58,22 +58,30 @@
   .subheader.show{ display:flex; }
   .subheader span{ font-size:14px; font-weight:500; }
 
-  /* ---------- HERO ---------- */
-  .hero{
-    position:relative; width:100%; height:220px; overflow:hidden;
-    text-align:left; display:block;
+  /* ---------- HERO CAROUSEL ---------- */
+  .hero-carousel{
+    position:relative; width:100%; height:220px; overflow:hidden; background:var(--olive);
   }
-  .hero::before{
+  .hero-slide{
+    position:absolute; inset:0; opacity:0; z-index:1; transition:opacity .7s ease;
+    background-size:cover; background-position:center; cursor:pointer; text-align:left;
+  }
+  .hero-slide.active{ opacity:1; z-index:2; }
+  .hero-slide::before{
     content:""; position:absolute; inset:0;
     background-image:repeating-linear-gradient(115deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 2px, transparent 2px, transparent 26px);
   }
+  .hero-overlay{ position:absolute; inset:0; background:rgba(20,19,15,0.22); }
   .hero-content{
     position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:20px;
   }
-  .hero.flip .hero-content{ align-items:flex-end; text-align:right; }
+  .hero-slide.flip .hero-content{ align-items:flex-end; text-align:right; }
   .hero-sub{ color:rgba(244,242,234,0.75); font-size:12px; margin-bottom:4px; }
   .hero-label{ font-family:'Fraunces',serif; font-style:italic; color:#F4F2EA; font-size:38px; line-height:1; }
   .hero-cta{ color:#F4F2EA; font-size:12px; margin-top:8px; text-decoration:underline; text-underline-offset:4px; }
+  .hero-dots{ position:absolute; bottom:14px; right:16px; z-index:3; display:flex; gap:6px; }
+  .hero-dot{ width:7px; height:7px; border-radius:999px; background:rgba(244,242,234,0.5); transition:width .2s ease; }
+  .hero-dot.active{ width:18px; background:#F4F2EA; }
 
   /* ---------- SECTION HEADS ---------- */
   .section-head{ padding:32px 16px 8px; }
@@ -280,7 +288,7 @@
     <button class="icon-btn" id="btn-menu" aria-label="Abrir menú">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#211F1A" stroke-width="1.8" stroke-linecap="round"/></svg>
     </button>
-    <button class="logo" id="btn-logo" aria-label="Ir al inicio">NOMBRE</button>
+    <button class="logo" id="btn-logo" aria-label="Ir al inicio">CRUDO</button>
     <button class="icon-btn" id="btn-cart" aria-label="Abrir carrito">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12.5a1 1 0 0 1-1 .9H8a1 1 0 0 1-1-.9L6 8Z" stroke="#211F1A" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#211F1A" stroke-width="1.6"/></svg>
       <span class="cart-badge" id="cart-badge" style="display:none;">0</span>
@@ -391,6 +399,8 @@ let filters = { gender:new Set(), category:new Set() };
 let filtersVisible = true;
 let currentProductId = null;
 let currentDetailPhotoIndex = 0;
+let heroIndex = 0;
+let heroTimer = null;
 
 /* ============ HELPERS ============ */
 const money = n => "$" + Number(n||0).toLocaleString("es-AR",{maximumFractionDigits:0});
@@ -423,6 +433,24 @@ db.collection("productos").orderBy("creadoEn","desc").onSnapshot((snap) => {
   console.error("No se pudieron cargar las prendas desde Firestore:", err);
   productsLoaded = true;
   render();
+});
+
+/* ============ CARGA DE BANNERS (Firestore, en vivo) ============ */
+const DEFAULT_BANNERS = [
+  { titulo:"Mujer", subtitulo:"Nueva selección", boton:"Ver colección", genero:"Mujer", imagen:"", color:"var(--olive)" },
+  { titulo:"Hombre", subtitulo:"Nueva selección", boton:"Ver colección", genero:"Hombre", imagen:"", color:"var(--denim)" },
+];
+let heroBanners = DEFAULT_BANNERS;
+
+db.collection("banners").orderBy("creadoEn","asc").onSnapshot((snap) => {
+  const activos = snap.docs.map(doc => doc.data()).filter(b => b.activo !== false);
+  heroBanners = activos.length ? activos : DEFAULT_BANNERS;
+  heroIndex = 0;
+  if(view === "home"){ renderHeroSlides(); startHeroAutoplay(); }
+}, (err) => {
+  console.error("No se pudieron cargar los banners:", err);
+  heroBanners = DEFAULT_BANNERS;
+  if(view === "home"){ renderHeroSlides(); startHeroAutoplay(); }
 });
 function cartItemsArray(){
   return Object.entries(cart).map(([id,qty]) => ({p:findProduct(id), qty})).filter(x=>x.p);
@@ -640,20 +668,7 @@ function renderHome(){
       : `<div class="grid">${featured.map((p,i) => productCardHTML(p, i >= 14 ? "grid-extra" : "")).join("")}</div>`;
 
   return `
-    <button class="hero" onclick="goCatalog({gender:'Mujer'})" style="background-color:var(--olive)">
-      <div class="hero-content">
-        <span class="hero-sub">Nueva selección</span>
-        <span class="hero-label">Mujer</span>
-        <span class="hero-cta">Ver colección</span>
-      </div>
-    </button>
-    <button class="hero flip" onclick="goCatalog({gender:'Hombre'})" style="background-color:var(--denim)">
-      <div class="hero-content">
-        <span class="hero-sub">Nueva selección</span>
-        <span class="hero-label">Hombre</span>
-        <span class="hero-cta">Ver colección</span>
-      </div>
-    </button>
+    <div class="hero-carousel" id="hero-carousel"></div>
 
     <div class="section-head">
       <h2>Destacado</h2>
@@ -680,6 +695,47 @@ function renderHome(){
       </div>
     </footer>
   `;
+}
+
+/* ============ HERO CAROUSEL ============ */
+function heroSlideHTML(b, i){
+  const bg = b.imagen
+    ? `background-image:url('${b.imagen}');`
+    : `background-color:${b.color || "var(--olive)"};`;
+  return `
+    <div class="hero-slide ${i===0?"active":""} ${i%2===1?"flip":""}" style="${bg}"
+         onclick="goCatalog({gender:'${(b.genero||"").replace(/'/g,"")}'})">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        ${b.subtitulo ? `<span class="hero-sub">${b.subtitulo}</span>` : ""}
+        <span class="hero-label">${b.titulo || ""}</span>
+        <span class="hero-cta">${b.boton || "Ver colección"}</span>
+      </div>
+    </div>`;
+}
+function renderHeroSlides(){
+  const el = document.getElementById("hero-carousel");
+  if(!el) return;
+  const dots = heroBanners.length > 1
+    ? `<div class="hero-dots">${heroBanners.map((_,i) => `<span class="hero-dot ${i===0?"active":""}" onclick="event.stopPropagation(); goHeroSlide(${i})"></span>`).join("")}</div>`
+    : "";
+  el.innerHTML = heroBanners.map((b,i) => heroSlideHTML(b,i)).join("") + dots;
+}
+function goHeroSlide(i){
+  heroIndex = i;
+  document.querySelectorAll("#hero-carousel .hero-slide").forEach((el,idx) => el.classList.toggle("active", idx === i));
+  document.querySelectorAll("#hero-carousel .hero-dot").forEach((el,idx) => el.classList.toggle("active", idx === i));
+  startHeroAutoplay();
+}
+function startHeroAutoplay(){
+  stopHeroAutoplay();
+  if(heroBanners.length <= 1) return;
+  heroTimer = setTimeout(() => {
+    goHeroSlide((heroIndex + 1) % heroBanners.length);
+  }, 6000);
+}
+function stopHeroAutoplay(){
+  if(heroTimer){ clearTimeout(heroTimer); heroTimer = null; }
 }
 
 /* ============ RENDER: CATALOG ============ */
@@ -890,9 +946,13 @@ function render(){
   const subTitle = document.getElementById("subheader-title");
   const titles = { catalog:"Catálogo", checkout:"Finalizar compra" };
 
+  stopHeroAutoplay();
+
   if(view === "home"){
     sub.classList.remove("show");
     main.innerHTML = renderHome();
+    renderHeroSlides();
+    startHeroAutoplay();
   } else if(view === "catalog"){
     sub.classList.add("show");
     subTitle.textContent = titles.catalog;
