@@ -7,7 +7,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -239,11 +238,11 @@
     </div>
 
     <div class="field-group">
-      <label>Fotos<span class="req">*</span></label>
-      <input type="file" id="f-fotos" accept="image/*" multiple hidden/>
-      <div class="photo-upload-box" id="photo-box">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#1B1B18" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <span>Subir</span>
+      <label for="f-foto-url">Fotos<span class="req">*</span></label>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">Pegá la URL de cada foto subida a GitHub (ej: .../img/ropa-001.webp) y tocá "Agregar foto". Podés agregar varias.</p>
+      <div style="display:flex;gap:8px;margin-bottom:4px;">
+        <input id="f-foto-url" type="text" placeholder="https://raw.githubusercontent.com/.../img/ropa-001.webp" style="flex:1;padding:12px 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel-soft);outline:none;font-size:14px;"/>
+        <button type="button" class="btn-secondary" id="add-photo-url-btn" style="padding:0 18px;">Agregar foto</button>
       </div>
       <div class="photo-previews" id="photo-previews"></div>
     </div>
@@ -258,6 +257,47 @@
   <div class="published-section">
     <h2>Prendas publicadas</h2>
     <div id="published-list"><p class="empty-msg">Cargando…</p></div>
+  </div>
+
+  <div class="published-section">
+    <h2>Banners de inicio</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin:-8px 0 20px;">
+      Rotan solos cada 6 segundos en la tienda. Si no agregás ninguno, se muestran los de Mujer/Hombre por defecto.
+    </p>
+    <form id="banner-form">
+      <div class="field-group">
+        <label for="b-titulo">Título<span class="req">*</span></label>
+        <input id="b-titulo" type="text" placeholder="Ej: 30% OFF"/>
+      </div>
+      <div class="field-group">
+        <label for="b-subtitulo">Subtítulo</label>
+        <input id="b-subtitulo" type="text" placeholder="Ej: Primavera, Nueva selección"/>
+      </div>
+      <div class="field-group">
+        <label for="b-boton">Texto del botón</label>
+        <input id="b-boton" type="text" placeholder="Ver colección"/>
+      </div>
+      <div class="field-group">
+        <label for="b-enlace">Enlace</label>
+        <select id="b-enlace"></select>
+      </div>
+      <div class="field-group">
+        <label for="b-imagen-url">Imagen de fondo<span class="req">*</span></label>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">Pegá la URL de la imagen subida a GitHub (ej: .../img/banner-primavera.webp).</p>
+        <input id="b-imagen-url" type="text" placeholder="https://raw.githubusercontent.com/.../img/banner-primavera.webp" style="width:100%;padding:12px 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel-soft);outline:none;font-size:14px;margin-bottom:10px;"/>
+        <div class="photo-previews" id="banner-photo-preview"></div>
+      </div>
+      <div class="field-group">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;">
+          <input type="checkbox" id="b-activo" checked/> Banner activo
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="banner-publish-btn">Agregar banner</button>
+      </div>
+      <div class="form-msg" id="banner-msg"></div>
+    </form>
+    <div id="banner-list" style="margin-top:24px;"><p class="empty-msg">Cargando…</p></div>
   </div>
 </div>
 
@@ -289,7 +329,6 @@ const FIREBASE_CONFIG = {
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
 /* ============ DATA ============ */
 const CATEGORIES = ["Camperas","Sweaters","Camisas","Pantalones","Vestidos","Faldas","Blazers","Remeras","Shorts","Buzos","Chalecos"];
@@ -304,39 +343,6 @@ const COLORS = [
 ];
 
 const money = n => "$" + Number(n||0).toLocaleString("es-AR",{maximumFractionDigits:0});
-
-/* ============ COMPRESIÓN DE FOTOS ============ */
-// Achica y comprime la imagen en el navegador antes de subirla, para que la subida sea rápida
-// aunque la foto original venga pesada (por ejemplo, sacada con la cámara del celular).
-function resizeImage(file, maxDim = 1600, quality = 0.82){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("No se pudo procesar la imagen"));
-      img.onload = () => {
-        let { width, height } = img;
-        if(width > height && width > maxDim){
-          height = Math.round(height * (maxDim / width));
-          width = maxDim;
-        } else if(height > maxDim){
-          width = Math.round(width * (maxDim / height));
-          height = maxDim;
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          blob ? resolve(blob) : reject(new Error("No se pudo comprimir la imagen"));
-        }, "image/jpeg", quality);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 /* ============ LOGIN ============ */
 const loginView = document.getElementById("login-view");
@@ -377,6 +383,7 @@ auth.onAuthStateChanged((user) => {
     loginView.style.display = "none";
     adminView.style.display = "block";
     watchPublishedProducts();
+    watchBanners();
   } else {
     loginView.style.display = "flex";
     adminView.style.display = "none";
@@ -390,7 +397,6 @@ auth.onAuthStateChanged((user) => {
 let selectedGender = null;
 let selectedSizes = new Set();
 let selectedColors = new Set();
-let selectedFiles = []; // { file, url }
 
 document.getElementById("genero-row").innerHTML = GENDERS.map(g =>
   `<button type="button" class="toggle-btn" data-value="${g}" onclick="pickGender('${g}')">${g}</button>`
@@ -421,25 +427,29 @@ function toggleColor(c){
   document.querySelectorAll("#colores-row .color-swatch").forEach(el => el.classList.toggle("selected", selectedColors.has(el.dataset.color)));
 }
 
-/* ============ FOTOS ============ */
-const fotosInput = document.getElementById("f-fotos");
-document.getElementById("photo-box").onclick = () => fotosInput.click();
-fotosInput.onchange = () => {
-  Array.from(fotosInput.files).forEach(file => {
-    selectedFiles.push({ file, url: URL.createObjectURL(file) });
-  });
-  fotosInput.value = "";
+/* ============ FOTOS (URLs de GitHub) ============ */
+let selectedPhotoUrls = [];
+const fotoUrlInput = document.getElementById("f-foto-url");
+document.getElementById("add-photo-url-btn").onclick = addPhotoUrl;
+fotoUrlInput.addEventListener("keydown", (e) => {
+  if(e.key === "Enter"){ e.preventDefault(); addPhotoUrl(); }
+});
+function addPhotoUrl(){
+  const url = fotoUrlInput.value.trim();
+  if(!url) return;
+  selectedPhotoUrls.push(url);
+  fotoUrlInput.value = "";
   renderPhotoPreviews();
-};
+}
 function renderPhotoPreviews(){
-  document.getElementById("photo-previews").innerHTML = selectedFiles.map((f,i) => `
+  document.getElementById("photo-previews").innerHTML = selectedPhotoUrls.map((url,i) => `
     <div class="photo-thumb">
-      <img src="${f.url}" alt="Foto ${i+1}"/>
+      <img src="${url}" alt="Foto ${i+1}" onerror="this.style.opacity=0.25"/>
       <button type="button" class="remove-photo" onclick="removePhoto(${i})">✕</button>
     </div>`).join("");
 }
 function removePhoto(i){
-  selectedFiles.splice(i,1);
+  selectedPhotoUrls.splice(i,1);
   renderPhotoPreviews();
 }
 
@@ -471,7 +481,7 @@ function validate(data){
   if(!data.descripcion) return "Falta la descripción.";
   if(data.talles.length === 0) return "Elegí al menos un talle.";
   if(data.colores.length === 0) return "Elegí al menos un color.";
-  if(selectedFiles.length === 0) return "Subí al menos una foto.";
+  if(selectedPhotoUrls.length === 0) return "Agregá al menos una foto (URL).";
   return null;
 }
 function showMsg(text, ok){
@@ -486,28 +496,12 @@ form.onsubmit = async (e) => {
   if(error){ showMsg(error, false); return; }
 
   publishBtn.disabled = true;
+  publishBtn.textContent = "Guardando…";
   msgEl.className = "form-msg";
 
   try{
     const safeCode = data.codigo.replace(/[\/\s]+/g, "-");
 
-    publishBtn.textContent = "Optimizando fotos…";
-    const processedPhotos = await Promise.all(selectedFiles.map(item => resizeImage(item.file)));
-
-    let uploadedCount = 0;
-    publishBtn.textContent = `Subiendo fotos… (0/${processedPhotos.length})`;
-    const urls = await Promise.all(processedPhotos.map((blob, i) => {
-      const path = `productos/${safeCode}/${Date.now()}_${i}.jpg`;
-      return storage.ref(path).put(blob, { contentType: "image/jpeg" })
-        .then(snap => snap.ref.getDownloadURL())
-        .then(url => {
-          uploadedCount++;
-          publishBtn.textContent = `Subiendo fotos… (${uploadedCount}/${processedPhotos.length})`;
-          return url;
-        });
-    }));
-
-    publishBtn.textContent = "Guardando…";
     await db.collection("productos").doc(safeCode).set({
       codigo: data.codigo,
       nombre: data.nombre,
@@ -518,7 +512,7 @@ form.onsubmit = async (e) => {
       descripcion: data.descripcion,
       talles: data.talles,
       colores: data.colores,
-      fotos: urls,
+      fotos: selectedPhotoUrls,
       creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -538,7 +532,7 @@ function resetForm(){
   selectedGender = null;
   selectedSizes = new Set();
   selectedColors = new Set();
-  selectedFiles = [];
+  selectedPhotoUrls = [];
   document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".color-swatch").forEach(el => el.classList.remove("selected"));
   renderPhotoPreviews();
@@ -547,7 +541,7 @@ function resetForm(){
 /* ============ VISTA PREVIA ============ */
 document.getElementById("preview-btn").onclick = () => {
   const data = collectFormData();
-  document.getElementById("preview-img").src = selectedFiles[0] ? selectedFiles[0].url : "";
+  document.getElementById("preview-img").src = selectedPhotoUrls[0] || "";
   document.getElementById("preview-name").textContent = data.nombre || "Nombre de la prenda";
   document.getElementById("preview-price").textContent = money(data.precio);
   document.getElementById("preview-meta").textContent =
@@ -590,17 +584,110 @@ function watchPublishedProducts(){
 async function deleteProduct(id){
   if(!confirm("¿Eliminar esta prenda? Esta acción no se puede deshacer.")) return;
   try{
-    const doc = await db.collection("productos").doc(id).get();
-    const data = doc.data();
-    if(data && data.fotos){
-      for(const url of data.fotos){
-        try{ await storage.refFromURL(url).delete(); }catch(e){ /* la foto ya pudo haberse borrado */ }
-      }
-    }
     await db.collection("productos").doc(id).delete();
   }catch(err){
     console.error(err);
     alert("No se pudo eliminar la prenda.");
+  }
+}
+
+/* ============ BANNERS DE INICIO ============ */
+document.getElementById("b-enlace").innerHTML =
+  `<option value="">Todo el catálogo</option>` +
+  GENDERS.map(g => `<option value="${g}">${g}</option>`).join("");
+
+const bannerUrlInput = document.getElementById("b-imagen-url");
+bannerUrlInput.addEventListener("input", () => {
+  const url = bannerUrlInput.value.trim();
+  document.getElementById("banner-photo-preview").innerHTML = url
+    ? `<div class="photo-thumb" style="aspect-ratio:16/6;"><img src="${url}" alt="Vista previa del banner" onerror="this.style.opacity=0.25"/></div>`
+    : "";
+});
+
+const bannerForm = document.getElementById("banner-form");
+const bannerMsg = document.getElementById("banner-msg");
+const bannerBtn = document.getElementById("banner-publish-btn");
+
+bannerForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const titulo = document.getElementById("b-titulo").value.trim();
+  const subtitulo = document.getElementById("b-subtitulo").value.trim();
+  const boton = document.getElementById("b-boton").value.trim() || "Ver colección";
+  const genero = document.getElementById("b-enlace").value;
+  const activo = document.getElementById("b-activo").checked;
+  const imagen = bannerUrlInput.value.trim();
+
+  bannerMsg.className = "form-msg";
+  if(!titulo){ bannerMsg.textContent = "Falta el título."; bannerMsg.className = "form-msg err"; return; }
+  if(!imagen){ bannerMsg.textContent = "Pegá la URL de la imagen de fondo."; bannerMsg.className = "form-msg err"; return; }
+
+  bannerBtn.disabled = true;
+  bannerBtn.textContent = "Guardando…";
+  try{
+    await db.collection("banners").add({
+      titulo, subtitulo, boton, genero, activo,
+      imagen,
+      creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    bannerMsg.textContent = "Banner agregado correctamente.";
+    bannerMsg.className = "form-msg ok";
+    bannerForm.reset();
+    document.getElementById("b-activo").checked = true;
+    document.getElementById("banner-photo-preview").innerHTML = "";
+  }catch(err){
+    console.error(err);
+    bannerMsg.textContent = "Ocurrió un error al guardar el banner.";
+    bannerMsg.className = "form-msg err";
+  }finally{
+    bannerBtn.disabled = false;
+    bannerBtn.textContent = "Agregar banner";
+  }
+};
+
+function watchBanners(){
+  db.collection("banners").orderBy("creadoEn","asc").onSnapshot((snap) => {
+    const list = document.getElementById("banner-list");
+    if(snap.empty){
+      list.innerHTML = `<p class="empty-msg">Todavía no agregaste banners. Se muestran los de Mujer/Hombre por defecto.</p>`;
+      return;
+    }
+    list.innerHTML = snap.docs.map((doc) => {
+      const d = doc.data();
+      const oculto = d.activo === false;
+      return `
+        <div class="published-row">
+          <div class="published-thumb" style="width:64px;height:40px;">${d.imagen ? `<img src="${d.imagen}" alt="${d.titulo}"/>` : ""}</div>
+          <div class="published-info">
+            <p class="name">${d.titulo || "(sin título)"}${oculto ? " · oculto" : ""}</p>
+            <p class="meta">${[d.subtitulo, d.genero || "Todo el catálogo"].filter(Boolean).join(" · ")}</p>
+          </div>
+          <button type="button" class="delete-btn" onclick="toggleBanner('${doc.id}', ${oculto})">${oculto ? "Mostrar" : "Ocultar"}</button>
+          <button type="button" class="delete-btn" onclick="deleteBanner('${doc.id}')">Eliminar</button>
+        </div>`;
+    }).join("");
+  }, (err) => {
+    console.error(err);
+    document.getElementById("banner-list").innerHTML = `<p class="empty-msg">No se pudo cargar la lista.</p>`;
+  });
+}
+
+async function toggleBanner(id, makeActive){
+  try{
+    await db.collection("banners").doc(id).update({ activo: makeActive });
+  }catch(err){
+    console.error(err);
+    alert("No se pudo actualizar el banner.");
+  }
+}
+
+async function deleteBanner(id){
+  if(!confirm("¿Eliminar este banner? Esta acción no se puede deshacer.")) return;
+  try{
+    await db.collection("banners").doc(id).delete();
+  }catch(err){
+    console.error(err);
+    alert("No se pudo eliminar el banner.");
   }
 }
 </script>
