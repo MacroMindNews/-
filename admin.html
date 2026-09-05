@@ -185,6 +185,7 @@
     </div>
     <div class="admin-nav">
       <button class="admin-nav-item active" data-section="publicaciones" onclick="goAdminSection('publicaciones')">Publicaciones</button>
+      <button class="admin-nav-item" data-section="prendas" onclick="goAdminSection('prendas')">Prendas publicadas</button>
       <button class="admin-nav-item" data-section="banners" onclick="goAdminSection('banners')">Banners</button>
       <button class="admin-nav-item" data-section="otro" onclick="goAdminSection('otro')">Otro</button>
       <div class="admin-nav-divider"></div>
@@ -274,9 +275,11 @@
     </div>
     <div class="form-msg" id="form-msg"></div>
   </form>
+  </div>
 
-  <div class="published-section">
-    <h2>Prendas publicadas</h2>
+  <div id="section-prendas" style="display:none;">
+  <h1>Prendas publicadas</h1>
+  <div class="published-section" style="margin-top:0;padding-top:0;border-top:none;">
     <div id="published-list"><p class="empty-msg">Cargando…</p></div>
   </div>
   </div>
@@ -416,7 +419,7 @@ document.getElementById("admin-drawer-close").onclick = () => document.getElemen
 document.getElementById("admin-drawer-scrim").onclick = () => document.getElementById("admin-drawer").classList.remove("open");
 
 function goAdminSection(section){
-  ["publicaciones","banners","otro"].forEach(s => {
+  ["publicaciones","prendas","banners","otro"].forEach(s => {
     document.getElementById("section-" + s).style.display = s === section ? "block" : "none";
   });
   document.querySelectorAll(".admin-nav-item[data-section]").forEach(el => {
