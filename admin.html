@@ -38,17 +38,24 @@
   .menu-btn{ display:flex; align-items:center; gap:8px; background:none; font-weight:700; letter-spacing:0.04em; font-size:14px; }
   header .logo{ font-family:'Fraunces',serif; font-size:26px; position:absolute; left:50%; transform:translateX(-50%); }
   .logout-btn{ background:none; color:var(--ink); font-size:13px; text-decoration:underline; text-underline-offset:3px; }
-  .menu-dropdown{
-    position:absolute; top:100%; left:20px; margin-top:6px; background:#fff; border:1px solid var(--line);
-    border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.08); overflow:hidden; display:none; z-index:10;
-    min-width:180px;
+  .drawer-overlay{ position:fixed; inset:0; z-index:40; pointer-events:none; }
+  .drawer-overlay.open{ pointer-events:auto; }
+  .drawer-scrim{ position:absolute; inset:0; background:rgba(27,27,24,0.45); opacity:0; transition:opacity .25s ease; }
+  .drawer-overlay.open .drawer-scrim{ opacity:1; }
+  .drawer-panel{
+    position:absolute; left:0; top:0; height:100%; width:82%; max-width:300px; overflow-y:auto;
+    background:#fff; transform:translateX(-100%); transition:transform .3s ease;
   }
-  .menu-dropdown.open{ display:block; }
-  .menu-dropdown a, .menu-dropdown button{
-    display:block; width:100%; text-align:left; padding:12px 16px; font-size:14px; color:var(--ink);
-    text-decoration:none; background:none;
+  .drawer-overlay.open .drawer-panel{ transform:translateX(0); }
+  .drawer-close-row{ display:flex; justify-content:flex-end; padding:20px 20px 0; }
+  .admin-nav{ padding:12px 12px 24px; display:flex; flex-direction:column; }
+  .admin-nav-item{
+    display:block; width:100%; text-align:left; padding:14px 12px; border-radius:6px;
+    font-size:16px; color:var(--ink); text-decoration:none; background:none;
   }
-  .menu-dropdown a:hover, .menu-dropdown button:hover{ background:var(--panel-soft); }
+  .admin-nav-item:hover{ background:var(--panel-soft); }
+  .admin-nav-item.active{ background:var(--olive); color:#fff; font-weight:600; }
+  .admin-nav-divider{ height:1px; background:var(--line); margin:12px 4px; }
 
   /* ---------- LOGIN ---------- */
   #login-view{
@@ -160,19 +167,32 @@
 <body>
 
 <header>
-  <div style="position:relative;">
-    <button class="menu-btn" id="btn-menu">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#1B1B18" stroke-width="2" stroke-linecap="round"/></svg>
-      MENÚ
-    </button>
-    <div class="menu-dropdown" id="menu-dropdown">
-      <a href="index.html">Ver tienda</a>
-      <button id="btn-logout-menu">Cerrar sesión</button>
-    </div>
-  </div>
+  <button class="menu-btn" id="btn-menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#1B1B18" stroke-width="2" stroke-linecap="round"/></svg>
+    MENÚ
+  </button>
   <span class="logo">NOMBRE</span>
   <span style="width:70px;"></span>
 </header>
+
+<div class="drawer-overlay" id="admin-drawer">
+  <div class="drawer-scrim" id="admin-drawer-scrim"></div>
+  <div class="drawer-panel">
+    <div class="drawer-close-row">
+      <button id="admin-drawer-close" aria-label="Cerrar menú">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#1B1B18" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="admin-nav">
+      <button class="admin-nav-item active" data-section="publicaciones" onclick="goAdminSection('publicaciones')">Publicaciones</button>
+      <button class="admin-nav-item" data-section="banners" onclick="goAdminSection('banners')">Banners</button>
+      <button class="admin-nav-item" data-section="otro" onclick="goAdminSection('otro')">Otro</button>
+      <div class="admin-nav-divider"></div>
+      <a class="admin-nav-item" href="index.html">Ver tienda</a>
+      <button class="admin-nav-item" id="btn-logout-drawer">Cerrar sesión</button>
+    </div>
+  </div>
+</div>
 
 <!-- LOGIN -->
 <div id="login-view">
@@ -190,21 +210,22 @@
 
 <!-- ADMIN -->
 <div id="admin-view">
+  <div id="section-publicaciones">
   <h1>Publicar</h1>
-  <form id="publish-form">
+  <form id="publish-form" autocomplete="off">
     <div class="field-group">
       <label for="f-codigo">Código<span class="req">*</span></label>
-      <input id="f-codigo" type="text" placeholder="#" required/>
+      <input id="f-codigo" autocomplete="off" spellcheck="false" type="text" placeholder="#" required/>
     </div>
 
     <div class="field-group">
       <label for="f-nombre">Nombre<span class="req">*</span></label>
-      <input id="f-nombre" type="text" required/>
+      <input id="f-nombre" autocomplete="off" spellcheck="false" type="text" required/>
     </div>
 
     <div class="field-group">
       <label for="f-marca">Marca<span class="req">*</span></label>
-      <input id="f-marca" type="text" required/>
+      <input id="f-marca" autocomplete="off" spellcheck="false" type="text" required/>
     </div>
 
     <div class="field-group">
@@ -219,7 +240,7 @@
 
     <div class="field-group">
       <label for="f-precio">Precio<span class="req">*</span></label>
-      <input id="f-precio" type="number" min="0" step="1" placeholder="$" required/>
+      <input id="f-precio" autocomplete="off" spellcheck="false" type="number" min="0" step="1" placeholder="$" required/>
     </div>
 
     <div class="field-group">
@@ -239,9 +260,9 @@
 
     <div class="field-group">
       <label for="f-foto-url">Fotos<span class="req">*</span></label>
-      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">Pegá la URL de cada foto subida a GitHub (ej: .../img/ropa-001.webp) y tocá "Agregar foto". Podés agregar varias.</p>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">Escribí la ruta corta (ej: img/ropa-001.webp) o pegá una URL completa, y tocá "Agregar foto". Podés agregar varias.</p>
       <div style="display:flex;gap:8px;margin-bottom:4px;">
-        <input id="f-foto-url" type="text" placeholder="https://raw.githubusercontent.com/.../img/ropa-001.webp" style="flex:1;padding:12px 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel-soft);outline:none;font-size:14px;"/>
+        <input id="f-foto-url" autocomplete="off" spellcheck="false" type="text" placeholder="img/ropa-001.webp" style="flex:1;padding:12px 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel-soft);outline:none;font-size:14px;"/>
         <button type="button" class="btn-secondary" id="add-photo-url-btn" style="padding:0 18px;">Agregar foto</button>
       </div>
       <div class="photo-previews" id="photo-previews"></div>
@@ -258,24 +279,26 @@
     <h2>Prendas publicadas</h2>
     <div id="published-list"><p class="empty-msg">Cargando…</p></div>
   </div>
+  </div>
 
-  <div class="published-section">
-    <h2>Banners de inicio</h2>
+  <div id="section-banners" style="display:none;">
+  <h1>Banners de inicio</h1>
+  <div class="published-section" style="margin-top:0;padding-top:0;border-top:none;">
     <p style="font-size:13px;color:var(--ink-soft);margin:-8px 0 20px;">
       Rotan solos cada 6 segundos en la tienda. Si no agregás ninguno, se muestran los de Mujer/Hombre por defecto.
     </p>
-    <form id="banner-form">
+    <form id="banner-form" autocomplete="off">
       <div class="field-group">
         <label for="b-titulo">Título<span class="req">*</span></label>
-        <input id="b-titulo" type="text" placeholder="Ej: 30% OFF"/>
+        <input id="b-titulo" autocomplete="off" spellcheck="false" type="text" placeholder="Ej: 30% OFF"/>
       </div>
       <div class="field-group">
         <label for="b-subtitulo">Subtítulo</label>
-        <input id="b-subtitulo" type="text" placeholder="Ej: Primavera, Nueva selección"/>
+        <input id="b-subtitulo" autocomplete="off" spellcheck="false" type="text" placeholder="Ej: Primavera, Nueva selección"/>
       </div>
       <div class="field-group">
         <label for="b-boton">Texto del botón</label>
-        <input id="b-boton" type="text" placeholder="Ver colección"/>
+        <input id="b-boton" autocomplete="off" spellcheck="false" type="text" placeholder="Ver colección"/>
       </div>
       <div class="field-group">
         <label for="b-enlace">Enlace</label>
@@ -283,8 +306,8 @@
       </div>
       <div class="field-group">
         <label for="b-imagen-url">Imagen de fondo<span class="req">*</span></label>
-        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">Pegá la URL de la imagen subida a GitHub (ej: .../img/banner-primavera.webp).</p>
-        <input id="b-imagen-url" type="text" placeholder="https://raw.githubusercontent.com/.../img/banner-primavera.webp" style="width:100%;padding:12px 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel-soft);outline:none;font-size:14px;margin-bottom:10px;"/>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">Escribí la ruta corta (ej: img/banner-primavera.webp) o pegá una URL completa.</p>
+        <input id="b-imagen-url" autocomplete="off" spellcheck="false" type="text" placeholder="img/banner-primavera.webp" style="width:100%;padding:12px 14px;border-radius:4px;border:1px solid var(--line);background:var(--panel-soft);outline:none;font-size:14px;margin-bottom:10px;"/>
         <div class="photo-previews" id="banner-photo-preview"></div>
       </div>
       <div class="field-group">
@@ -298,6 +321,12 @@
       <div class="form-msg" id="banner-msg"></div>
     </form>
     <div id="banner-list" style="margin-top:24px;"><p class="empty-msg">Cargando…</p></div>
+  </div>
+  </div>
+
+  <div id="section-otro" style="display:none;">
+    <h1>Otro</h1>
+    <p style="color:var(--ink-soft);font-size:14px;">Por acá vamos a poder agregar, en un futuro, otras herramientas de administración de la tienda.</p>
   </div>
 </div>
 
@@ -344,6 +373,19 @@ const COLORS = [
 
 const money = n => "$" + Number(n||0).toLocaleString("es-AR",{maximumFractionDigits:0});
 
+/* ============ IMÁGENES ALOJADAS EN GITHUB ============ */
+// Repo donde subís las fotos: MacroMindNews/- , rama main.
+const GITHUB_BASE_URL = "https://raw.githubusercontent.com/MacroMindNews/-/main/";
+
+// Si escribís una ruta corta (ej: "img/ropa-001.webp") arma la URL completa sola.
+// Si pegás una URL completa (http/https, sea de GitHub o de cualquier otro lado), la deja tal cual.
+function resolveImageUrl(value){
+  value = value.trim();
+  if(!value) return "";
+  if(/^https?:\/\//i.test(value)) return value;
+  return GITHUB_BASE_URL + value.replace(/^\/+/, "");
+}
+
 /* ============ LOGIN ============ */
 const loginView = document.getElementById("login-view");
 const adminView = document.getElementById("admin-view");
@@ -368,15 +410,21 @@ loginForm.onsubmit = async (e) => {
   }
 };
 
-document.getElementById("btn-logout-menu").onclick = () => auth.signOut();
-document.getElementById("btn-menu").onclick = () => document.getElementById("menu-dropdown").classList.toggle("open");
-document.addEventListener("click", (e) => {
-  const dropdown = document.getElementById("menu-dropdown");
-  const btn = document.getElementById("btn-menu");
-  if(dropdown.classList.contains("open") && !dropdown.contains(e.target) && !btn.contains(e.target)){
-    dropdown.classList.remove("open");
-  }
-});
+document.getElementById("btn-logout-drawer").onclick = () => auth.signOut();
+document.getElementById("btn-menu").onclick = () => document.getElementById("admin-drawer").classList.add("open");
+document.getElementById("admin-drawer-close").onclick = () => document.getElementById("admin-drawer").classList.remove("open");
+document.getElementById("admin-drawer-scrim").onclick = () => document.getElementById("admin-drawer").classList.remove("open");
+
+function goAdminSection(section){
+  ["publicaciones","banners","otro"].forEach(s => {
+    document.getElementById("section-" + s).style.display = s === section ? "block" : "none";
+  });
+  document.querySelectorAll(".admin-nav-item[data-section]").forEach(el => {
+    el.classList.toggle("active", el.dataset.section === section);
+  });
+  document.getElementById("admin-drawer").classList.remove("open");
+  window.scrollTo(0,0);
+}
 
 auth.onAuthStateChanged((user) => {
   if(user){
@@ -435,9 +483,9 @@ fotoUrlInput.addEventListener("keydown", (e) => {
   if(e.key === "Enter"){ e.preventDefault(); addPhotoUrl(); }
 });
 function addPhotoUrl(){
-  const url = fotoUrlInput.value.trim();
-  if(!url) return;
-  selectedPhotoUrls.push(url);
+  const raw = fotoUrlInput.value.trim();
+  if(!raw) return;
+  selectedPhotoUrls.push(resolveImageUrl(raw));
   fotoUrlInput.value = "";
   renderPhotoPreviews();
 }
@@ -598,7 +646,7 @@ document.getElementById("b-enlace").innerHTML =
 
 const bannerUrlInput = document.getElementById("b-imagen-url");
 bannerUrlInput.addEventListener("input", () => {
-  const url = bannerUrlInput.value.trim();
+  const url = resolveImageUrl(bannerUrlInput.value);
   document.getElementById("banner-photo-preview").innerHTML = url
     ? `<div class="photo-thumb" style="aspect-ratio:16/6;"><img src="${url}" alt="Vista previa del banner" onerror="this.style.opacity=0.25"/></div>`
     : "";
@@ -615,7 +663,7 @@ bannerForm.onsubmit = async (e) => {
   const boton = document.getElementById("b-boton").value.trim() || "Ver colección";
   const genero = document.getElementById("b-enlace").value;
   const activo = document.getElementById("b-activo").checked;
-  const imagen = bannerUrlInput.value.trim();
+  const imagen = resolveImageUrl(bannerUrlInput.value);
 
   bannerMsg.className = "form-msg";
   if(!titulo){ bannerMsg.textContent = "Falta el título."; bannerMsg.className = "form-msg err"; return; }
